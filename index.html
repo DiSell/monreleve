@@ -1206,6 +1206,7 @@ let weekOffset = 0, expandedDay = -1, monthOffset = 0;
 let _r = 0, _sig = false, _supMode = 'paie', _lastWId = null;
 let tData = mkData(), dTots = Array(7).fill(0);
 let eData = mkEData();
+let _extracted = {};
 
 function mkData(){ return Array(7).fill(null).map(()=>({amS:'',amE:'',pmS:'',pmE:''})); }
 function mkEData(){ return Array(7).fill(null).map(()=>({nuit:0,ferie:false,astreinte:false,panier:false,km:0})); }
@@ -2436,8 +2437,6 @@ function rate(n){ _r=n; document.querySelectorAll('.star').forEach((s,i)=>s.clas
 /* ══════════════════════════════════════
    PDF IMPORT & EXTRACTION
 ══════════════════════════════════════ */
-let _extracted = {};
-
 function resetUpload(){
   document.getElementById('upZone').style.display='';
   document.getElementById('upLoading').style.display='none';
