@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TimePro — Relevé d'heures</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 body{
@@ -68,13 +72,24 @@ body{
 .frow:last-child{margin-bottom:0;}
 .flbl{font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;}
 .req{color:#EF4444;}
-.finput{background:#F4F8FB;border:2px solid #E8EDF8;border-radius:12px;padding:13px 14px;font-size:15px;font-weight:500;color:#0F172A;font-family:inherit;transition:border-color .2s,background .2s;-webkit-appearance:none;}
+.finput{width:100%;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:12px;padding:13px 14px;font-size:15px;font-weight:500;color:#0F172A;font-family:inherit;transition:border-color .2s,background .2s;-webkit-appearance:none;}
 .finput:focus{outline:none;border-color:#2563EB;background:#EBF2FF;}
 .finput::placeholder{color:#B8C4D4;font-weight:400;}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fgrid>*{min-width:0;}
 .finput.invalid{border-color:#EF4444;background:#FEF2F2;}
 .legal-box{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;}
 .legal-box p{font-size:12px;color:#92400E;line-height:1.5;}
+.rgpd-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;text-align:center;}
+.rgpd-checks{width:100%;background:white;border-radius:16px;padding:4px 14px;margin-bottom:22px;text-align:left;}
+.rgpd-check{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;}
+.rgpd-check:last-child{border-bottom:none;}
+.rgpd-check-txt{font-size:13px;color:#334155;line-height:1.5;}
+.rgpd-check-txt strong{color:#1e3a6e;display:block;margin-bottom:1px;}
+.lgl-section{margin-bottom:22px;}
+.lgl-section h3{font-size:11px;font-weight:700;color:#1e3a6e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #e2e8f0;}
+.lgl-section p,.lgl-section li{font-size:12.5px;color:#475569;line-height:1.7;margin-bottom:3px;}
+.lgl-section ul{padding-left:16px;}
 
 /* ── WEEKLY TIMESHEET ── */
 .week-nav{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,23,42,.06);}
@@ -108,6 +123,31 @@ input[type=time]{border:none;background:transparent;font-size:17px;font-weight:7
 input[type=time]:focus{outline:none;}
 .day-tot-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px dashed #EDF1F8;font-size:13px;color:#64748B;}
 .day-tot-row strong{font-size:15px;font-weight:800;color:#2563EB;}
+
+/* ── SALARY CARD ── */
+.sal-card{background:#fff;border-radius:14px;padding:0;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,23,42,.06);overflow:hidden;}
+.sal-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.sal-header-left{display:flex;align-items:center;gap:8px;}
+.sal-title{font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;}
+.sal-net-preview{font-size:15px;font-weight:800;color:#059669;}
+.sal-body{padding:0 16px 14px;border-top:1px solid #F1F5F9;}
+.sal-taux-row{display:flex;align-items:center;gap:8px;padding:10px 0 8px;border-bottom:1px dashed #EDF1F8;margin-bottom:10px;}
+.sal-taux-label{font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;flex:1;}
+.sal-section{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px;}
+.sal-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#475569;padding:3px 0;}
+.sal-row strong{font-size:13px;font-weight:700;color:#0F172A;}
+.sal-row.sup25 strong{color:#F59E0B;}
+.sal-row.sup50 strong{color:#EF4444;}
+.sal-row.maj{color:#7C3AED;}
+.sal-row.maj strong{color:#7C3AED;}
+.sal-divider{border:none;border-top:1px dashed #E8EDF8;margin:8px 0;}
+.sal-total-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.sal-total-row .sal-lbl{font-size:12px;font-weight:700;color:#64748B;}
+.sal-total-row .sal-val{font-size:16px;font-weight:800;color:#0F172A;}
+.sal-net-box{background:linear-gradient(135deg,#ECFDF5 0%,#D1FAE5 100%);border-radius:12px;padding:12px 14px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;}
+.sal-net-label{font-size:11px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.05em;}
+.sal-net-amount{font-size:26px;font-weight:800;color:#059669;letter-spacing:-.02em;}
+.sal-note{font-size:10px;color:#94A3B8;margin-top:8px;line-height:1.5;}
 
 /* ── TOTAL CARD ── */
 .total-card{background:linear-gradient(135deg,#2563EB 0%,#1A3FBD 100%);border-radius:18px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 28px rgba(37,99,235,.38);}
@@ -168,11 +208,11 @@ input[type=time]:focus{outline:none;}
 .qfill-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .qfill-title{font-size:13px;font-weight:700;color:#0F172A;display:flex;align-items:center;gap:6px;}
 .qfill-title span{font-size:11px;font-weight:600;color:#94A3B8;font-style:normal;}
-.qfill-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.qfill-field{}
-.qfill-lbl{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
-.qfill-pair{display:flex;align-items:center;gap:4px;}
-.qfill-t{background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:7px 6px;font-size:14px;font-weight:700;color:#0F172A;font-family:inherit;-webkit-appearance:none;width:100%;transition:border-color .2s;}
+.qfill-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.qfill-row{display:flex;align-items:center;gap:10px;}
+.qfill-lbl{font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;width:68px;flex-shrink:0;}
+.qfill-pair{display:flex;align-items:center;gap:5px;flex:1;min-width:0;}
+.qfill-t{background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:7px 5px;font-size:14px;font-weight:700;color:#0F172A;font-family:inherit;-webkit-appearance:none;flex:1;min-width:0;transition:border-color .2s;}
 .qfill-t:focus{outline:none;border-color:#2563EB;background:#EBF2FF;}
 .qfill-sep{font-size:12px;color:#CBD5E4;flex-shrink:0;}
 .qfill-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -180,6 +220,18 @@ input[type=time]:focus{outline:none;}
 .qfill-btn:active{transform:scale(.96);}
 .qfill-btn-wd{background:#EBF2FF;color:#1D4ED8;}
 .qfill-btn-all{background:#2563EB;color:#fff;}
+
+/* Draft banner */
+.draft-banner{background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.draft-left .draft-title{font-size:13px;font-weight:700;color:#92400E;}
+.draft-left .draft-age{font-size:11px;color:#B45309;margin-top:2px;}
+.draft-btns{display:flex;gap:6px;flex-shrink:0;}
+.draft-btn-ok{background:#F59E0B;color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;}
+.draft-btn-ok:active{opacity:.8;}
+.draft-btn-x{background:#FDE68A;color:#92400E;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* Cloud sync indicator */
+.cloud-pill{display:inline-flex;align-items:center;gap:5px;background:#DCFCE7;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#15803D;}
 
 /* Flash feedback */
 #flashMsg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#10B981;color:#fff;padding:10px 20px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(5,150,105,.4);}
@@ -275,6 +327,39 @@ textarea::placeholder{color:#B8C4D4;}
 .empty-icon{font-size:52px;margin-bottom:16px;opacity:.5;}
 .empty-title{font-size:16px;font-weight:700;color:#475569;margin-bottom:8px;}
 .empty-sub{font-size:13px;color:#94A3B8;line-height:1.5;}
+
+/* ── EXTRAS PAR JOUR ── */
+.extras-toggle{display:flex;align-items:center;gap:7px;background:none;border:none;font-family:inherit;font-size:12px;font-weight:700;color:#94A3B8;cursor:pointer;padding:10px 0 2px;margin-top:10px;border-top:1px dashed #EDF1F8;width:100%;transition:color .15s;}
+.extras-toggle:active{opacity:.7;}
+.extras-toggle.has-data{color:#7C3AED;}
+.extras-body{display:none;padding-top:10px;}
+.extras-body.open{display:block;}
+.check-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.chk-pill{display:flex;align-items:center;gap:5px;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:7px 10px;cursor:pointer;transition:background .15s,border-color .15s;font-size:12px;font-weight:600;color:#475569;-webkit-user-select:none;user-select:none;}
+.chk-pill.on{background:#F3E8FF;border-color:#C4B5FD;color:#6D28D9;}
+.chk-pill input{display:none;}
+.num-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.num-field label{display:block;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.num-wrap{display:flex;align-items:center;gap:6px;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:8px 10px;transition:border-color .2s;}
+.num-wrap:focus-within{border-color:#2563EB;background:#EBF2FF;}
+.num-wrap input[type=number]{border:none;background:transparent;font-size:15px;font-weight:700;color:#0F172A;font-family:inherit;width:100%;-webkit-appearance:none;appearance:none;}
+.num-wrap input[type=number]:focus{outline:none;}
+.num-unit{font-size:11px;font-weight:700;color:#94A3B8;flex-shrink:0;}
+.extras-badge{font-size:10px;font-weight:700;color:#7C3AED;background:#F3E8FF;border-radius:5px;padding:2px 6px;margin-left:auto;}
+
+/* ── COMPLÉMENTS SEMAINE ── */
+.week-extras{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 4px rgba(15,23,42,.06);margin-bottom:12px;}
+.we-title{font-size:13px;font-weight:700;color:#0F172A;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.we-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.we-field label{display:block;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.we-input-wrap{display:flex;align-items:center;gap:6px;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 11px;transition:border-color .2s;}
+.we-input-wrap:focus-within{border-color:#2563EB;background:#EBF2FF;}
+.we-input-wrap input{border:none;background:transparent;font-size:15px;font-weight:700;color:#0F172A;font-family:inherit;width:100%;-webkit-appearance:none;appearance:none;}
+.we-input-wrap input:focus{outline:none;}
+.we-unit{font-size:13px;font-weight:700;color:#94A3B8;flex-shrink:0;}
+.photo-label{display:flex;align-items:center;gap:10px;background:#F4F8FB;border:2px dashed #E8EDF8;border-radius:12px;padding:12px 14px;cursor:pointer;margin-top:5px;transition:border-color .2s,background .2s;}
+.photo-label:active{background:#EBF2FF;border-color:#BFDBFE;}
+.photo-label.has-file{background:#EBF2FF;border-color:#BFDBFE;border-style:solid;}
 </style>
 </head>
 <body>
@@ -294,16 +379,142 @@ textarea::placeholder{color:#B8C4D4;}
   </button>
 </div>
 
+<!-- ═══ S_RGPD — PREMIER LANCEMENT ═══ -->
+<div id="s_rgpd" class="screen">
+  <div class="rgpd-wrap">
+    <img src="logo-icon.svg" alt="TimePro" style="width:80px;height:80px;margin-bottom:18px;">
+    <div style="font-size:23px;font-weight:800;color:#1e3a6e;margin-bottom:6px;">Vos données vous appartiennent</div>
+    <div style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:22px;">TimePro stocke vos relevés uniquement sur votre appareil. Aucune information ne transite sur un serveur.</div>
+    <div class="rgpd-checks">
+      <div class="rgpd-check">
+        <span style="font-size:18px;">🔒</span>
+        <div class="rgpd-check-txt"><strong>Stockage local uniquement</strong>Vos heures, nom et contrat restent sur cet appareil.</div>
+      </div>
+      <div class="rgpd-check">
+        <span style="font-size:18px;">🚫</span>
+        <div class="rgpd-check-txt"><strong>Aucun serveur, aucun compte</strong>TimePro ne collecte ni ne transmet aucune donnée personnelle.</div>
+      </div>
+      <div class="rgpd-check">
+        <span style="font-size:18px;">🗑️</span>
+        <div class="rgpd-check-txt"><strong>Suppression à tout moment</strong>Vous pouvez effacer toutes vos données depuis les mentions légales.</div>
+      </div>
+      <div class="rgpd-check">
+        <span style="font-size:18px;">📋</span>
+        <div class="rgpd-check-txt"><strong>Conservation légale 5 ans</strong>Exportez vos relevés en PDF pour respecter vos obligations légales.</div>
+      </div>
+    </div>
+    <button class="btn btn-blue" style="width:100%;min-height:52px;font-size:16px;margin-bottom:12px;" onclick="acceptRgpd()">J'ai compris →</button>
+    <button onclick="slideToScreen('s_legal')" style="background:none;border:none;font-size:12px;color:#94a3b8;cursor:pointer;padding:6px;">Mentions légales &amp; politique de confidentialité</button>
+  </div>
+</div>
+
+<!-- ═══ S_LEGAL — MENTIONS LÉGALES ═══ -->
+<div id="s_legal" class="screen">
+  <div class="header" style="background:white;">
+    <div class="prog-bar"><div class="prog-fill" style="width:0%"></div></div>
+    <div class="h-row">
+      <button class="btn-back" onclick="bk(_legalFrom,'s_legal');">←</button>
+      <div class="h-info"><div class="h-step">Proactif System</div><div class="h-title">Mentions légales</div></div>
+    </div>
+  </div>
+  <div class="content" style="padding:20px;">
+
+    <div class="lgl-section">
+      <h3>Éditeur de l'application</h3>
+      <p><strong>Didier Sellin</strong></p>
+      <p>Nom commercial : <strong>ProactifSystem</strong></p>
+      <p>SIREN : 510 749 682</p>
+      <p>Code APE : 62.01Z — Programmation informatique</p>
+      <p>Siège social : 43100 Brioude, Haute-Loire</p>
+      <p>Contact : <a href="mailto:bonjour@proactifsystem.com" style="color:#2563eb;">bonjour@proactifsystem.com</a></p>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Hébergement</h3>
+      <p>Application hébergée sur le domaine <strong>proactifsysteme.com</strong></p>
+      <p><strong>IONOS SE</strong> — 7, place de la Gare, 57200 Sarreguemines</p>
+      <p><a href="https://www.ionos.fr" style="color:#2563eb;">www.ionos.fr</a></p>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Données personnelles traitées</h3>
+      <p>TimePro traite les données suivantes dans le cadre de son fonctionnement :</p>
+      <ul>
+        <li>Nom, prénom, qualification de l'intérimaire</li>
+        <li>Numéro de contrat de mission</li>
+        <li>Heures travaillées par jour et par semaine</li>
+        <li>Coordonnées de l'agence d'intérim</li>
+        <li>Signature numérique du relevé</li>
+      </ul>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Stockage &amp; sécurité</h3>
+      <p>Toutes les données sont stockées <strong>exclusivement sur votre appareil</strong> (localStorage du navigateur). Aucune donnée n'est transmise à un serveur distant. ProactifSystem n'a accès à aucune de vos données personnelles.</p>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Base légale du traitement</h3>
+      <p>Le traitement est fondé sur l'<strong>exécution d'une obligation légale</strong> (art. L1251-46 du Code du travail) et sur le <strong>consentement de l'utilisateur</strong>.</p>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Durée de conservation</h3>
+      <p>Les données restent sur votre appareil jusqu'à ce que vous les supprimiez. La réglementation impose une conservation des relevés d'heures pendant <strong>5 ans minimum</strong>. Exportez vos relevés en PDF pour assurer cette conservation.</p>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Vos droits (RGPD)</h3>
+      <p>Conformément au Règlement (UE) 2016/679, vous disposez des droits suivants :</p>
+      <ul>
+        <li>Droit d'accès à vos données</li>
+        <li>Droit de rectification</li>
+        <li>Droit à l'effacement (« droit à l'oubli »)</li>
+        <li>Droit à la portabilité</li>
+      </ul>
+      <p style="margin-top:6px;">Pour exercer ces droits : <a href="mailto:bonjour@proactifsystem.com" style="color:#2563eb;">bonjour@proactifsystem.com</a></p>
+    </div>
+
+    <div class="lgl-section">
+      <h3>Supprimer toutes mes données</h3>
+      <p style="margin-bottom:10px;color:#64748b;">Cette action efface définitivement tous vos relevés, brouillons et paramètres de l'application. Elle est irréversible.</p>
+      <button onclick="deleteAllData()" style="width:100%;background:#fff0f0;border:1.5px solid #fca5a5;border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#dc2626;cursor:pointer;">🗑️ Supprimer toutes mes données</button>
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:#cbd5e1;margin-top:8px;padding-bottom:8px;">TimePro v1.0 — © 2026 ProactifSystem</p>
+  </div>
+</div>
+
 <!-- ═══ S_UPLOAD — IMPORT CONTRAT ═══ -->
 <div id="s_upload" class="screen active">
   <div class="header">
     <div class="prog-bar"><div class="prog-fill" style="width:0%;"></div></div>
     <div class="h-row">
-      <div class="h-info"><div class="h-step">TimePro</div><div class="h-title">Nouveau relevé</div></div>
+      <div class="h-info">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="logo-icon.svg" alt="" style="height:34px;">
+          <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#1b2b4b;">Time<span style="color:#2563eb;">Pro</span></span>
+        </div>
+      </div>
       <div class="h-badge">Import</div>
     </div>
   </div>
   <div class="content with-tabs">
+
+    <!-- Brouillon -->
+    <div id="draftBanner" class="draft-banner" style="display:none;">
+      <div class="draft-left">
+        <div class="draft-title">📝 Brouillon en cours</div>
+        <div class="draft-age" id="draftAge">—</div>
+      </div>
+      <div class="draft-btns">
+        <button class="draft-btn-ok" onclick="doRestoreDraft()">Reprendre →</button>
+        <button class="draft-btn-x" onclick="dismissDraft()">✕</button>
+      </div>
+    </div>
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div id="dashHome" style="display:none;"></div>
 
     <!-- Zone upload -->
     <div id="upZone">
@@ -312,7 +523,7 @@ textarea::placeholder{color:#B8C4D4;}
            ondragover="event.preventDefault();this.classList.add('drag')"
            ondragleave="this.classList.remove('drag')"
            ondrop="event.preventDefault();this.classList.remove('drag');handlePDF(null,event.dataTransfer.files[0])">
-        <div class="upload-ico">📄</div>
+        <div class="upload-ico"><img src="logo.svg" alt="" style="width:72px;height:72px;"></div>
         <div class="upload-title">Importer l'ordre de mission</div>
         <div class="upload-sub">Touchez pour sélectionner votre contrat PDF</div>
         <div class="upload-fmt">PDF — Start People, Adecco, Manpower…</div>
@@ -354,7 +565,22 @@ textarea::placeholder{color:#B8C4D4;}
       </div>
 
       <button class="btn btn-blue mt" onclick="continueFromExtract()">Vérifier et continuer →</button>
-      <button class="btn btn-ghost mt" style="margin-top:10px;" onclick="resetUpload()">Changer de fichier</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+        <button class="btn btn-ghost" onclick="skipUpload()">✏️ Saisir manuellement</button>
+        <button class="btn btn-ghost" onclick="resetUpload()">📄 Changer de fichier</button>
+
+      <!-- Voir le contrat -->
+      <div id="exDebugWrap" style="display:none;grid-column:1/-1;margin-top:8px;">
+        <button onclick="toggleContrat()" style="width:100%;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+          <span>📄 Voir le contrat</span>
+          <span id="exDebugChevron" style="font-size:10px;color:#94a3b8;">▼</span>
+        </button>
+        <div id="exDebugTxtWrap" style="display:none;margin-top:6px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;max-height:260px;overflow-y:auto;">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;font-weight:600;letter-spacing:.05em;">TEXTE EXTRAIT DU PDF</div>
+          <pre id="exDebugTxt" style="font-size:11px;color:#334155;white-space:pre-wrap;margin:0;font-family:monospace;line-height:1.6;"></pre>
+        </div>
+      </div>
+      </div>
     </div>
 
   </div>
@@ -365,15 +591,12 @@ textarea::placeholder{color:#B8C4D4;}
   <div class="header">
     <div class="prog-bar"><div class="prog-fill" style="width:16%;"></div></div>
     <div class="h-row">
+      <button class="btn-back" onclick="bk('s_upload','s0');showTabBar(true);buildDashboard();">←</button>
       <div class="h-info"><div class="h-step">Étape 1 / 6</div><div class="h-title">Infos intérimaire</div></div>
       <div class="h-badge">Légal</div>
     </div>
   </div>
   <div class="content with-tabs">
-    <div class="legal-box">
-      <span style="font-size:16px;">⚖️</span>
-      <p>Conformément à l'art. <strong>L1251-46 du Code du travail</strong>, le relevé d'heures identifie l'intérimaire par son nom, prénom et qualification.</p>
-    </div>
     <div class="sec">Identité</div>
     <div class="card">
       <div class="fgrid">
@@ -423,7 +646,7 @@ textarea::placeholder{color:#B8C4D4;}
     <div class="sec">Responsable</div>
     <div class="card">
       <div class="frow"><span class="flbl">Nom du responsable <span class="req">*</span></span><input class="finput" id="ag_resp" type="text" placeholder="Marie Martin"></div>
-      <div class="frow mb0"><span class="flbl">Téléphone</span><input class="finput" id="ag_tel" type="tel" placeholder="01 00 00 00 00"></div>
+      <div class="frow mb0"><span class="flbl">Téléphone</span><div style="display:flex;gap:8px;align-items:center"><input class="finput" id="ag_tel" type="tel" placeholder="01 00 00 00 00" oninput="updateCallBtn()"><a id="ag_tel_call" href="#" onclick="return false;" style="display:none;flex-shrink:0;background:#22c55e;color:#fff;border-radius:50%;width:38px;height:38px;display:none;align-items:center;justify-content:center;font-size:18px;text-decoration:none;" title="Appeler l'agence">📞</a></div></div>
     </div>
     <div id="e1ag" class="err mt" style="margin-bottom:10px;">⚠ Renseignez les champs obligatoires (*).</div>
     <button class="btn btn-blue" id="btn_s1ag">Suivant →</button>
@@ -442,15 +665,18 @@ textarea::placeholder{color:#B8C4D4;}
   </div>
   <div id="flashMsg"></div>
   <div class="content">
-    <div class="badge">🏭 Entrepôt logistique — Réf. #4821</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <div class="badge" id="missionBadge" style="margin-bottom:0;flex:1">🏭 Mission</div>
+      <a id="quickCallBtn" href="#" onclick="return false;" style="display:none;background:#22c55e;color:#fff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">📞 Appeler l'agence</a>
+    </div>
 
     <!-- Quick-fill template -->
     <div class="qfill-card">
       <div class="qfill-top">
         <div class="qfill-title">⚡ Heures types <span>— Remplir la semaine en 1 tap</span></div>
       </div>
-      <div class="qfill-grid">
-        <div class="qfill-field">
+      <div class="qfill-rows">
+        <div class="qfill-row">
           <span class="qfill-lbl">🌅 Matin</span>
           <div class="qfill-pair">
             <input type="time" class="qfill-t" id="tpl-am-s" value="08:00">
@@ -458,8 +684,8 @@ textarea::placeholder{color:#B8C4D4;}
             <input type="time" class="qfill-t" id="tpl-am-e" value="12:00">
           </div>
         </div>
-        <div class="qfill-field">
-          <span class="qfill-lbl">🌆 Après-midi</span>
+        <div class="qfill-row">
+          <span class="qfill-lbl">🌆 Ap-midi</span>
           <div class="qfill-pair">
             <input type="time" class="qfill-t" id="tpl-pm-s" value="13:30">
             <span class="qfill-sep">→</span>
@@ -482,14 +708,350 @@ textarea::placeholder{color:#B8C4D4;}
       <button class="wbtn" onclick="changeWeek(1)">›</button>
     </div>
     <div id="daysList"></div>
-    <div class="total-card">
+
+    <!-- Compléments semaine -->
+    <div class="week-extras">
+      <div class="we-title">💼 Compléments de la semaine</div>
+      <div class="we-grid">
+        <div class="we-field">
+          <label>Prime exceptionnelle</label>
+          <div class="we-input-wrap"><input type="number" id="wk_prime" min="0" step="0.01" placeholder="0" oninput="calcSalaire();debouncedSave()"><span class="we-unit">€</span></div>
+        </div>
+        <div class="we-field" style="grid-column:1/-1;border-top:1px dashed #E8EDF8;padding-top:12px;margin-top:4px;">
+          <!-- Bouton toggle IKM -->
+          <button class="extras-toggle" id="ikm-tog" onclick="toggleIkm()" style="width:100%;justify-content:space-between;">
+            <span>🚗 Indemnité de déplacement</span>
+            <span id="ikm-badge" style="font-size:11px;font-weight:700;color:#2563EB;background:#EBF2FF;border-radius:6px;padding:2px 8px;display:none;"></span>
+          </button>
+          <div id="ikm-body" style="display:none;margin-top:10px;">
+          <!-- Toggle barème -->
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <button id="ikm-btn-f" onclick="setIkmMode('fiscal')" style="flex:1;border:2px solid #2563EB;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:#2563EB;color:#fff;cursor:pointer;font-family:inherit;">📏 Fiscal URSSAF</button>
+            <button id="ikm-btn-b" onclick="setIkmMode('btp')"   style="flex:1;border:2px solid #E8EDF8;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:transparent;color:#94A3B8;cursor:pointer;font-family:inherit;">🏗 BTP / Zones</button>
+          </div>
+
+          <!-- Fiscal URSSAF -->
+          <div id="ikm-fiscal">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <div>
+                <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Puissance fiscale</div>
+                <select id="ikm-cv" onchange="calcIkm()" style="width:100%;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:9px 8px;font-size:13px;font-weight:700;font-family:inherit;color:#0F172A;-webkit-appearance:none;">
+                  <option value="0.502">3 CV — 0,502 €/km</option>
+                  <option value="0.575">4 CV — 0,575 €/km</option>
+                  <option value="0.603" selected>5 CV — 0,603 €/km</option>
+                  <option value="0.631">6 CV — 0,631 €/km</option>
+                  <option value="0.661">7 CV+ — 0,661 €/km</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Km aller-retour/jour</div>
+                <div class="we-input-wrap"><input type="number" id="ikm-km-day" min="0" step="1" placeholder="0" oninput="calcIkm()"><span class="we-unit">km</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;background:#F8FAFC;border-radius:10px;padding:10px 12px;font-size:13px;flex-wrap:wrap;">
+              <span style="color:#64748B;font-size:12px;" id="ikm-taux-lbl">0,603 €/km</span>
+              <span style="color:#CBD5E4;">×</span>
+              <span style="font-weight:700;color:#0F172A;" id="ikm-km-ttl">0 km</span>
+              <span style="color:#CBD5E4;">=</span>
+              <strong style="color:#059669;font-size:16px;margin-left:auto;" id="ikm-ttl-f">0,00 €</strong>
+            </div>
+          </div>
+
+          <!-- BTP / Zones -->
+          <div id="ikm-btp" style="display:none;">
+
+            <!-- Dépôt -->
+            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">🏢 Dépôt (point de départ)</div>
+            <div style="display:flex;gap:6px;margin-bottom:4px;">
+              <input type="text" id="ikm-depot-adr" placeholder="Ex: 12 rue des Maçons, 43100 Brioude" oninput="debouncedSave()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
+              <button onclick="geocodeDepot()" id="ikm-geo-btn" title="Localiser le dépôt" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:9px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">📍</button>
+            </div>
+            <div id="ikm-geo-status" style="font-size:10px;color:#94A3B8;margin-bottom:6px;display:none;"></div>
+
+            <!-- Séparateur -->
+            <div style="display:flex;align-items:center;gap:6px;margin:4px 0 8px;">
+              <div style="flex:1;height:1px;background:#EDF1F8;"></div>
+              <span style="font-size:16px;color:#CBD5E4;">↕</span>
+              <div style="flex:1;height:1px;background:#EDF1F8;"></div>
+            </div>
+
+            <!-- Chantier -->
+            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">🏗 Chantier (lieu de travail)</div>
+            <div style="display:flex;gap:6px;margin-bottom:4px;">
+              <input type="text" id="ikm-chantier-adr" placeholder="Ex: ZI du Brézet, 63100 Clermont-Ferrand" oninput="debouncedSave()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
+              <button onclick="geocodeChantier()" id="ikm-chantier-btn" title="Localiser le chantier" style="background:#EF4444;color:#fff;border:none;border-radius:10px;padding:9px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">📍</button>
+            </div>
+            <div id="ikm-chantier-status" style="font-size:10px;color:#94A3B8;margin-bottom:8px;display:none;"></div>
+
+            <!-- Carte Leaflet -->
+            <div id="ikm-map-wrap" style="display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;border:2px solid #E8EDF8;">
+              <div id="ikm-map" style="height:200px;width:100%;"></div>
+              <div style="background:#F8FAFC;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#2563EB;display:inline-block;border-radius:2px;"></span>Dépôt</span>
+                <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#EF4444;display:inline-block;border-radius:2px;border-style:dashed;"></span>Chantier</span>
+                <span id="ikm-dist-badge" style="display:none;margin-left:auto;font-size:11px;font-weight:700;color:#2563EB;background:#EBF2FF;border-radius:6px;padding:2px 8px;"></span>
+              </div>
+            </div>
+
+            <!-- Zone auto-détectée -->
+            <div id="ikm-zone-detected" style="display:none;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:none;align-items:center;gap:8px;">
+              <span style="font-size:20px;">✅</span>
+              <div style="flex:1;">
+                <div style="font-size:10px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.05em;">Zone détectée automatiquement</div>
+                <div style="font-size:13px;font-weight:700;color:#0F172A;margin-top:2px;"><span id="ikm-zone-label">—</span> <span style="font-weight:400;color:#64748B;font-size:11px;">· <span id="ikm-dist-label">—</span> à vol d'oiseau</span></div>
+              </div>
+            </div>
+
+            <!-- Taux par zone -->
+            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Taux journalier par zone (accord régional)</div>
+            <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;" id="ikm-zones-list">
+              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-1">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone I &nbsp;≤ 10 km</span>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-2">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone II &nbsp;11-20 km</span>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-3">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone III &nbsp;21-30 km</span>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-4">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone IV &nbsp;31-40 km</span>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-5">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone V &nbsp;41-50 km</span>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+              </div>
+            </div>
+
+            <!-- Sélecteur de zone (modifiable si l'auto-détection est fausse) -->
+            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Ma zone <span style="font-weight:400;text-transform:none;font-size:10px;">(corrigeable)</span></div>
+            <select id="ikm-zone-sel" onchange="highlightZoneRow();calcIkm()" style="width:100%;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:9px 8px;font-size:12px;font-weight:700;font-family:inherit;color:#0F172A;-webkit-appearance:none;margin-bottom:8px;">
+              <option value="1">Zone I — ≤ 10 km</option>
+              <option value="2">Zone II — 11 à 20 km</option>
+              <option value="3">Zone III — 21 à 30 km</option>
+              <option value="4">Zone IV — 31 à 40 km</option>
+              <option value="5">Zone V — 41 à 50 km</option>
+            </select>
+
+            <!-- Résultat -->
+            <div style="display:flex;align-items:center;gap:5px;background:#F8FAFC;border-radius:10px;padding:10px 12px;font-size:13px;">
+              <span style="color:#64748B;font-size:12px;" id="ikm-taux-btp">— €/j</span>
+              <span style="color:#CBD5E4;">×</span>
+              <span style="font-weight:700;color:#0F172A;" id="ikm-jours-btp">0 j.</span>
+              <span style="color:#CBD5E4;">=</span>
+              <strong style="color:#059669;font-size:16px;margin-left:auto;" id="ikm-ttl-b">— €</strong>
+            </div>
+            <div style="font-size:10px;color:#94A3B8;margin-top:6px;">Taux selon l'accord CCN BTP de votre région</div>
+          </div>
+          </div><!-- /ikm-body -->
+        </div>
+        <div class="we-field">
+          <label>Ind. de trajet</label>
+          <div class="we-input-wrap"><input type="number" id="wk_trajet" min="0" step="0.01" placeholder="0" oninput="calcSalaire();debouncedSave()"><span class="we-unit">€</span></div>
+        </div>
+        <div class="we-field" style="grid-column:1/-1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label style="margin:0;">🍱 Panier repas</label>
+            <div style="font-size:11px;color:#1D4ED8;font-weight:700;background:#EBF2FF;border-radius:6px;padding:2px 8px;" id="wk_panier_count">0 j. / semaine</div>
+          </div>
+
+          <!-- Non soumis à cotisations -->
+          <div style="margin-bottom:7px;">
+            <div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Non soumis <span style="font-weight:400;color:#94A3B8;font-size:9px;">exonéré URSSAF</span></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div class="we-input-wrap" style="flex:1;"><input type="number" id="wk_panier_unit" min="0" step="0.01" placeholder="€/j" oninput="updatePanierCount();debouncedSave()"><span class="we-unit">€/j</span></div>
+              <span style="color:#CBD5E4;font-size:13px;">×</span>
+              <span style="font-weight:700;color:#475569;font-size:13px;min-width:18px;text-align:center;" id="wk_pan_cnt_exo">0</span>
+              <span style="color:#CBD5E4;font-size:13px;">=</span>
+              <span style="font-weight:700;color:#059669;font-size:13px;min-width:52px;text-align:right;" id="wk_pan_tot_exo">— €</span>
+            </div>
+          </div>
+
+          <!-- Soumis à cotisations -->
+          <div style="margin-bottom:10px;">
+            <div style="font-size:10px;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Soumis <span style="font-weight:400;color:#94A3B8;font-size:9px;">au-delà du plafond — entre dans le brut</span></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div class="we-input-wrap" style="flex:1;"><input type="number" id="wk_panier_unit_tax" min="0" step="0.01" placeholder="€/j" oninput="updatePanierCount();debouncedSave()"><span class="we-unit">€/j</span></div>
+              <span style="color:#CBD5E4;font-size:13px;">×</span>
+              <span style="font-weight:700;color:#475569;font-size:13px;min-width:18px;text-align:center;" id="wk_pan_cnt_tax">0</span>
+              <span style="color:#CBD5E4;font-size:13px;">=</span>
+              <span style="font-weight:700;color:#F59E0B;font-size:13px;min-width:52px;text-align:right;" id="wk_pan_tot_tax">— €</span>
+            </div>
+          </div>
+
+          <!-- Totaux semaine + mensuel -->
+          <div style="background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-radius:11px;padding:10px 13px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:11px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.04em;">Total semaine</span>
+              <span style="font-size:17px;font-weight:800;color:#059669;" id="wk_panier_total">— €</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;border-top:1px dashed rgba(6,95,70,.2);padding-top:5px;">
+              <span style="font-size:10px;color:#065F46;opacity:.8;">Estimation mensuelle <span style="opacity:.6;">(×4,3 semaines)</span></span>
+              <span style="font-size:12px;font-weight:700;color:#059669;" id="wk_panier_mensuel">— €</span>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#94A3B8;margin-top:5px;line-height:1.4;">Plafond exonération URSSAF 2024 : <strong>9,40 €/j</strong> — la part soumise intègre le brut imposable</div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Commentaire personnel</div>
+        <textarea id="wk_comment" placeholder="Conditions particulières, remarques, heures de dimanche…" style="height:70px;margin-top:0;"></textarea>
+      </div>
       <div>
+        <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Photo justificatif</div>
+        <label class="photo-label" id="photoLabel" onclick="document.getElementById('wk_photo').click()">
+          <span style="font-size:22px;">📎</span>
+          <div><div style="font-size:13px;font-weight:600;color:#0F172A;" id="wk_photo_lbl">Ajouter un justificatif</div><div style="font-size:11px;color:#94A3B8;">Photo, ticket, feuille signée…</div></div>
+        </label>
+        <input type="file" id="wk_photo" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="onPhotoChange()">
+      </div>
+    </div>
+
+    <div class="total-card">
+      <div style="flex:1;">
         <div class="tot-ey">Total semaine</div>
         <div class="tot-num" id="weekTotNum">0h00</div>
         <div class="tot-sub" id="weekTotSub">0 jour(s) renseigné(s)</div>
       </div>
       <div class="tot-icon">📋</div>
     </div>
+    <div id="supCard" style="display:none;background:#fff;border-radius:14px;padding:13px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,23,42,.06);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;">⏱ Heures supplémentaires</div>
+        <div style="display:flex;background:#F1F5F9;border-radius:8px;padding:2px;gap:2px;">
+          <button id="btnPaie" onclick="setSupMode('paie')" style="border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;background:#2563EB;color:#fff;transition:all .15s;">💰 Paiement</button>
+          <button id="btnCpt"  onclick="setSupMode('cpt')"  style="border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#64748B;transition:all .15s;">🗂 Compteur</button>
+        </div>
+      </div>
+
+      <!-- Mode paiement majoré -->
+      <div id="modePaie" style="display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:#475569;">Heures normales <span style="color:#94A3B8;font-size:11px;">(≤35h)</span></span>
+          <strong style="font-size:14px;color:#0F172A;" id="hNorm">35h00</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;" id="row25">
+          <span style="font-size:13px;color:#F59E0B;">H.sup. +25% <span style="font-size:11px;">(36→43h)</span></span>
+          <strong style="font-size:14px;color:#F59E0B;" id="hSup25">0h00</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;display:none;" id="row50">
+          <span style="font-size:13px;color:#EF4444;">H.sup. +50% <span style="font-size:11px;">(>43h)</span></span>
+          <strong style="font-size:14px;color:#EF4444;" id="hSup50">0h00</strong>
+        </div>
+        <div style="font-size:10px;color:#94A3B8;margin-top:4px;">Art. L3121-22 Code du travail</div>
+      </div>
+
+      <!-- Mode compteur d'heures (RCR) -->
+      <div id="modeCpt" style="display:none;flex-direction:column;gap:7px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:#475569;">Heures normales <span style="color:#94A3B8;font-size:11px;">(≤35h)</span></span>
+          <strong style="font-size:14px;color:#0F172A;" id="hNorm2">35h00</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#EBF2FF;border-radius:10px;padding:9px 12px;">
+          <span style="font-size:13px;color:#1D4ED8;font-weight:600;">🗂 Créditées au compteur</span>
+          <strong style="font-size:16px;color:#1D4ED8;" id="hCpt">0h00</strong>
+        </div>
+        <div style="font-size:10px;color:#94A3B8;">Repos compensateur de remplacement — Art. L3121-33</div>
+      </div>
+    </div>
+    <!-- Simulateur de salaire -->
+    <div class="sal-card" id="salCard" style="display:none;">
+      <div class="sal-header" onclick="toggleSalBody()">
+        <div class="sal-header-left">
+          <span style="font-size:18px;">💶</span>
+          <span class="sal-title">Estimatif de salaire</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="sal-net-preview" id="salNetPreview">—</span>
+          <span id="salChevron" style="font-size:12px;color:#94A3B8;transition:transform .2s;">▼</span>
+        </div>
+      </div>
+      <div class="sal-body" id="salBody" style="display:none;">
+        <!-- Taux horaire — toujours visible dans le corps ouvert -->
+        <div class="sal-taux-row">
+          <span class="sal-taux-label">Taux horaire brut</span>
+          <div class="we-input-wrap" style="width:100px;"><input type="number" id="taux_horaire" min="0" step="0.01" placeholder="Ex: 12,50" oninput="calcSalaire();debouncedSave()"><span class="we-unit">€/h</span></div>
+        </div>
+        <div id="salNoHours" style="font-size:12px;color:#94A3B8;padding:6px 0 2px;">Saisissez vos heures pour voir l'estimation.</div>
+
+        <!-- Zone calcul (cachée si pas de taux / pas d'heures) -->
+        <div id="salCalcBody" style="display:none;">
+        <!-- Brut imposable -->
+        <div class="sal-section">Brut imposable</div>
+        <div class="sal-row" id="salRowNorm">
+          <span>Heures normales <span style="color:#CBD5E4;font-size:11px;" id="salHNorm">0h00</span></span>
+          <strong id="salMtNorm">— €</strong>
+        </div>
+        <div class="sal-row sup25" id="salRow25" style="display:none;">
+          <span>H.sup. +25% <span style="color:#CBD5E4;font-size:11px;" id="salH25">0h00</span></span>
+          <strong id="salMt25">— €</strong>
+        </div>
+        <div class="sal-row sup50" id="salRow50" style="display:none;">
+          <span>H.sup. +50% <span style="color:#CBD5E4;font-size:11px;" id="salH50">0h00</span></span>
+          <strong id="salMt50">— €</strong>
+        </div>
+        <div class="sal-row maj" id="salRowNuit" style="display:none;">
+          <span>Maj. nuit +25% <span style="color:#C4B5FD;font-size:11px;" id="salHNuit">0h</span></span>
+          <strong id="salMtNuit">— €</strong>
+        </div>
+        <div class="sal-row maj" id="salRowFerie" style="display:none;">
+          <span>Férié travaillé +100% <span style="color:#C4B5FD;font-size:11px;" id="salHFerie">0h</span></span>
+          <strong id="salMtFerie">— €</strong>
+        </div>
+        <hr class="sal-divider">
+        <div class="sal-total-row">
+          <span class="sal-lbl">Total brut</span>
+          <span class="sal-val" id="salBrut">— €</span>
+        </div>
+
+        <!-- Dans le brut : panier soumis -->
+        <div class="sal-row maj" id="salRowPanierTax" style="display:none;">
+          <span>Panier soumis <span style="font-size:10px;opacity:.7;">(brut imposable)</span></span><strong id="salMtPanierTax">— €</strong>
+        </div>
+        <hr class="sal-divider">
+        <div class="sal-total-row">
+          <span class="sal-lbl">Total brut</span>
+          <span class="sal-val" id="salBrut2">— €</span>
+        </div>
+
+        <!-- Indemnités -->
+        <div class="sal-section">Indemnités <span style="font-weight:400;text-transform:none;font-size:10px;">(non soumises à cotisations)</span></div>
+        <div class="sal-row" id="salRowPanier" style="display:none;">
+          <span>Panier non soumis</span><strong id="salMtPanier">— €</strong>
+        </div>
+        <div class="sal-row" id="salRowTrajet" style="display:none;">
+          <span>Ind. de trajet</span><strong id="salMtTrajet">— €</strong>
+        </div>
+        <div class="sal-row" id="salRowIkm" style="display:none;">
+          <span>IKM</span><strong id="salMtIkm">— €</strong>
+        </div>
+        <div class="sal-row" id="salRowPrime" style="display:none;">
+          <span>Prime exceptionnelle</span><strong id="salMtPrime">— €</strong>
+        </div>
+        <div id="salNoIndem" style="font-size:12px;color:#94A3B8;padding:4px 0;">Aucune indemnité renseignée</div>
+
+        <!-- Net estimé -->
+        <div class="sal-net-box">
+          <div>
+            <div class="sal-net-label">Net estimé</div>
+            <div style="font-size:10px;color:#065F46;opacity:.7;margin-top:2px;">après cotisations salariales (~22,7%)</div>
+          </div>
+          <div class="sal-net-amount" id="salNet">— €</div>
+        </div>
+        <div class="sal-note">Simulation indicative. Le net réel dépend de votre situation, du PAS et des conventions collectives applicables.</div>
+        </div><!-- /salCalcBody -->
+      </div>
+    </div>
+
     <div id="eHr" class="err" style="margin-bottom:10px;">⚠ Renseignez au moins un jour de travail.</div>
     <button class="btn btn-blue" onclick="go_hr()">Valider les heures →</button>
   </div>
@@ -564,7 +1126,7 @@ textarea::placeholder{color:#B8C4D4;}
   <div class="content">
     <div class="card" style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
       <div style="width:44px;height:44px;background:#EBF2FF;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🏭</div>
-      <div><div style="font-size:14px;font-weight:700;color:#0F172A;">Entrepôt logistique</div><div style="font-size:12px;color:#94A3B8;">Réf. #4821 · <span id="fbD">—</span></div></div>
+      <div><div style="font-size:14px;font-weight:700;color:#0F172A;" id="fbMission">—</div><div style="font-size:12px;color:#94A3B8;"><span id="fbRef">—</span> · <span id="fbD">—</span></div></div>
     </div>
     <div class="sec">Comment s'est passée la mission ?</div>
     <div class="card" style="padding-bottom:14px;">
@@ -595,6 +1157,7 @@ textarea::placeholder{color:#B8C4D4;}
       <div class="s-row"><span class="s-lbl">⭐ Note</span><span class="s-val" id="sRate">—</span></div>
       <div class="s-row"><span class="s-lbl">📋 Statut</span><span class="s-val grn">Validé · Signé</span></div>
     </div>
+    <button class="btn btn-blue" onclick="exportPDF(_lastWId)" style="min-height:52px;font-size:15px;margin-bottom:10px;width:100%;">📤 Partager le relevé (PDF)</button>
     <div class="btn-row2">
       <button class="btn btn-ghost" onclick="switchTab('mois')" style="min-height:48px;font-size:13px;">📅 Mon mois</button>
       <button class="btn btn-dark" onclick="newEntry()" style="min-height:48px;">+ Nouveau relevé</button>
@@ -625,21 +1188,312 @@ textarea::placeholder{color:#B8C4D4;}
 /* ══════════════════════════════════════
    CONSTANTS & STATE
 ══════════════════════════════════════ */
+/* ── CLOUD CONFIG (à remplir lors du déploiement) ── */
+const CLOUD = {
+  enabled: false,         // passer à true + renseigner les clés Supabase
+  url: '',                // ex: 'https://xxxx.supabase.co'
+  key: '',                // clé publique anon
+  table: 'releves'
+};
+
 const DAY_NAMES = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 const RLBL = ['','Très difficile','Passable','Correct','Bien','Excellent !'];
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const WEEKS_KEY = 'timepro_weeks';
+const DRAFT_KEY = 'timepro_draft';
 
 let weekOffset = 0, expandedDay = -1, monthOffset = 0;
-let _r = 0, _sig = false;
+let _r = 0, _sig = false, _supMode = 'paie', _lastWId = null;
 let tData = mkData(), dTots = Array(7).fill(0);
+let eData = mkEData();
 
 function mkData(){ return Array(7).fill(null).map(()=>({amS:'',amE:'',pmS:'',pmE:''})); }
+function mkEData(){ return Array(7).fill(null).map(()=>({nuit:0,ferie:false,astreinte:false,panier:false,km:0})); }
 
 /* ══════════════════════════════════════
    LOCAL STORAGE
 ══════════════════════════════════════ */
 function loadWeeks(){ try{ return JSON.parse(localStorage.getItem(WEEKS_KEY))||[]; }catch(e){ return []; } }
+
+/* ══════════════════════════════════════
+   BROUILLON (AUTO-SAVE LOCAL)
+══════════════════════════════════════ */
+const _FIELDS = ['i_nom','i_prenom','i_qualif','i_contrat','i_tel','i_email',
+                 'ag_nom','ag_siret','ag_adr','ag_cp','ag_ville','ag_resp','ag_tel',
+                 'cl_nom','cl_qualite','wk_prime','wk_trajet','wk_km_total','wk_panier_unit','wk_comment',
+                 'ikm-depot-adr','ikm-chantier-adr','ikm-z1','ikm-z2','ikm-z3','ikm-z4','ikm-z5',
+                 'taux_horaire','wk_panier_unit_tax'];
+let _draftTimer = null;
+
+function updateCallBtn(){
+  const tel = (document.getElementById('ag_tel')?.value||'').replace(/[\s.\-]/g,'');
+  const href = tel ? 'tel:'+tel : null;
+  // bouton dans le formulaire agence
+  const btn1 = document.getElementById('ag_tel_call');
+  if(btn1){ if(href){ btn1.href=href; btn1.style.display='flex'; } else btn1.style.display='none'; }
+  // bouton rapide dans la vue semaine
+  const btn2 = document.getElementById('quickCallBtn');
+  if(btn2){ if(href){ btn2.href=href; btn2.style.display='inline-block'; } else btn2.style.display='none'; }
+}
+
+function saveDraft(){
+  const form={};
+  _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) form[id]=el.value; });
+  const ikmZoneSel = document.getElementById('ikm-zone-sel')?.value||'1';
+  const ikmOpen = document.getElementById('ikm-body')?.style.display!=='none';
+  const draft={ ts:Date.now(), weekOffset, tData:JSON.parse(JSON.stringify(tData)),
+    dTots:[...dTots], eData:JSON.parse(JSON.stringify(eData)), _supMode, _ikmMode, ikmZoneSel, ikmOpen, form };
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+}
+
+function debouncedSave(){
+  clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(saveDraft, 800);
+}
+
+function clearDraft(){ localStorage.removeItem(DRAFT_KEY); }
+
+function checkDraft(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw) return;
+    const d=JSON.parse(raw);
+    const hasData = Object.values(d.form||{}).some(v=>v&&v.trim()) || (d.tData&&d.tData.some(x=>x.amS||x.pmS));
+    if(!hasData){ clearDraft(); return; }
+    const age=Date.now()-d.ts;
+    const ageStr=age<3600000?Math.round(age/60000)+' min':Math.round(age/3600000)+'h';
+    document.getElementById('draftAge').textContent='Dernière sauvegarde : il y a '+ageStr;
+    document.getElementById('draftBanner').style.display='flex';
+  }catch(e){ clearDraft(); }
+}
+
+function doRestoreDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem(DRAFT_KEY));
+    weekOffset=d.weekOffset||0;
+    tData=d.tData||mkData();
+    dTots=d.dTots||Array(7).fill(0);
+    eData=d.eData||mkEData();
+    _supMode=d._supMode||'paie';
+    _ikmMode=d._ikmMode||'fiscal';
+    _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el&&d.form[id]!=null) el.value=d.form[id]; });
+    const zSel=document.getElementById('ikm-zone-sel'); if(zSel&&d.ikmZoneSel) zSel.value=d.ikmZoneSel;
+    const ikmBody=document.getElementById('ikm-body'); if(ikmBody) ikmBody.style.display=d.ikmOpen?'':'none';
+    const ikmTog=document.getElementById('ikm-tog'); if(ikmTog) ikmTog.classList.toggle('has-data',!!d.ikmOpen);
+    setIkmMode(_ikmMode);
+    buildWeek(); updatePanierCount(); calcIkm(); updateCallBtn();
+    document.getElementById('draftBanner').style.display='none';
+    flash('✓ Brouillon restauré !');
+    slide('s_upload','s0');
+  }catch(e){ flash('⚠ Impossible de restaurer le brouillon','#EF4444'); }
+}
+
+function dismissDraft(){
+  clearDraft();
+  document.getElementById('draftBanner').style.display='none';
+}
+
+/* ══════════════════════════════════════
+   CLOUD SYNC (Supabase — activable)
+══════════════════════════════════════ */
+async function syncCloud(weekData){
+  if(!CLOUD.enabled||!CLOUD.url||!CLOUD.key) return;
+  try{
+    const res=await fetch(CLOUD.url+'/rest/v1/'+CLOUD.table, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':CLOUD.key,'Authorization':'Bearer '+CLOUD.key,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify(weekData)
+    });
+    if(res.ok) flash('☁ Synchronisé avec le cloud');
+    else console.warn('Cloud sync HTTP',res.status);
+  }catch(e){ console.warn('Cloud sync error',e); }
+}
+/* ══════════════════════════════════════
+   EXPORT PDF
+══════════════════════════════════════ */
+async function exportPDF(wId){
+  if(!window.jspdf){ flash('⚠ jsPDF non chargé — vérifiez votre connexion','#EF4444'); return; }
+  const weeks=loadWeeks();
+  const rec=wId ? weeks.find(w=>w.id===wId) : weeks[weeks.length-1];
+  if(!rec){ flash('⚠ Relevé introuvable','#EF4444'); return; }
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210, M=14;
+  let y=0;
+
+  const BLUE=[37,99,235], DARK=[15,23,42], GRAY=[100,116,139],
+        WHITE=[255,255,255], LIGHT=[244,248,251], GREEN=[5,150,105];
+
+  const set=(size,style,col)=>{
+    doc.setFontSize(size);
+    doc.setFont('helvetica',style||'normal');
+    doc.setTextColor(...(col||DARK));
+  };
+  const t=(txt,x,yt,opts)=>doc.text(String(txt||'—'),x,yt,opts||{});
+  const hline=(yt,col)=>{ doc.setDrawColor(...(col||[229,236,248])); doc.setLineWidth(0.3); doc.line(M,yt,W-M,yt); };
+
+  // ── BANDEAU EN-TÊTE
+  doc.setFillColor(...BLUE);
+  doc.rect(0,0,W,30,'F');
+  set(17,'bold',WHITE); t('RELEVÉ D\'HEURES',M,13);
+  set(9,'normal',WHITE);
+  t('Semaine '+rec.weekLabel+'  ·  '+rec.weekDates, M, 22);
+  t('MonRélevé · proactifsysteme.com', W-M, 22, {align:'right'});
+  y=36;
+
+  // ── INTÉRIMAIRE + AGENCE (2 colonnes)
+  const i=rec.iInfo||{};
+  const colW=(W-2*M-6)/2;
+  const c2=M+colW+6;
+
+  doc.setFillColor(...LIGHT); doc.roundedRect(M,y,colW,36,2,2,'F');
+  doc.setFillColor(...LIGHT); doc.roundedRect(c2,y,colW,36,2,2,'F');
+
+  set(6,'bold',BLUE);
+  t('INTÉRIMAIRE',M+4,y+7); t('AGENCE / EMPLOYEUR',c2+4,y+7);
+
+  set(10,'bold',DARK);
+  t((i.prenom||'')+' '+(i.nom||rec.interimaire||''),M+4,y+14);
+  t(i.agNom||'—',c2+4,y+14);
+
+
+  set(8,'normal',GRAY);
+  t(i.qualif||'',M+4,y+20);
+  t('SIRET: '+(i.agSiret||'—'),c2+4,y+20);
+  t('Contrat n° '+(i.contrat||'—'),M+4,y+26);
+  const agAdrLine=[i.agAdr,i.agCp,i.agVille].filter(Boolean).join(' · ');
+  t(agAdrLine||'—',c2+4,y+26);
+  t('Tél: '+(i.tel||'—'),M+4,y+32);
+  t((i.agResp?'Resp.: '+i.agResp+' — ':'')+'Tél: '+(i.agTel||'—'),c2+4,y+32);
+  y+=42;
+
+  // ── HEURES TRAVAILLÉES
+  set(8,'bold',DARK); t('HEURES TRAVAILLÉES',M,y); y+=3;
+
+  const dayRows=(rec.days||[]).map(d=>{
+    const exArr=rec.extras?.days||[];
+    const ex=exArr[rec.days.indexOf(d)]||{};
+    const flags=[];
+    if(ex.nuit>0) flags.push('N');
+    if(ex.ferie)  flags.push('F');
+    if(ex.astreinte) flags.push('A');
+    return [
+      d.name,
+      d.amS&&d.amE ? d.amS+' – '+d.amE : '—',
+      d.pmS&&d.pmE ? d.pmS+' – '+d.pmE : '—',
+      d.tot ? fmtMin(d.tot) : '—',
+      flags.join(' ')||''
+    ];
+  });
+
+  const tot=rec.totalMin, BASE=35*60;
+  const sup25=Math.max(0,Math.min(tot,43*60)-BASE), sup50=Math.max(0,tot-43*60);
+
+  doc.autoTable({
+    startY:y,
+    head:[['Jour','Matin','Après-midi','Total','Maj.']],
+    body:dayRows,
+    foot:[[{content:'TOTAL SEMAINE',colSpan:3,styles:{halign:'right',fontStyle:'bold'}},{content:fmtMin(tot),styles:{fontStyle:'bold',textColor:BLUE}},sup25>0||sup50>0?'+sup':'']],
+    theme:'grid',
+    styles:{fontSize:8,cellPadding:2.2,textColor:DARK},
+    headStyles:{fillColor:BLUE,textColor:WHITE,fontStyle:'bold',fontSize:8,cellPadding:2.5},
+    footStyles:{fillColor:LIGHT,fontStyle:'bold',fontSize:9},
+    columnStyles:{0:{cellWidth:26,fontStyle:'bold'},1:{cellWidth:37},2:{cellWidth:37},3:{cellWidth:22,halign:'center',textColor:BLUE,fontStyle:'bold'},4:{cellWidth:14,halign:'center',fontSize:7,textColor:[124,58,237]}},
+    alternateRowStyles:{fillColor:[249,252,255]},
+    margin:{left:M,right:M},
+    didParseCell:d=>{if(d.section==='body'&&d.column.index===3&&d.cell.raw==='—') d.cell.styles.textColor=GRAY;}
+  });
+  y=doc.lastAutoTable.finalY+3;
+
+  // Légende + heures sup
+  const hasFlags=(rec.extras?.days||[]).some(e=>e.nuit>0||e.ferie||e.astreinte);
+  if(hasFlags){ set(7,'normal',GRAY); t('N = nuit  ·  F = férié travaillé  ·  A = astreinte',M,y); y+=4; }
+
+  if(tot>BASE){
+    doc.setFillColor(235,242,255); doc.roundedRect(M,y,W-2*M,10,2,2,'F');
+    set(8,'normal',DARK);
+    t('Base : '+fmtMin(Math.min(tot,BASE)),M+4,y+7);
+    if(sup25>0){ set(8,'bold',[245,158,11]); t('+ '+fmtMin(sup25)+' h.sup. +25%',M+38,y+7); }
+    if(sup50>0){ set(8,'bold',[239,68,68]);  t('+ '+fmtMin(sup50)+' h.sup. +50%',M+88,y+7); }
+    y+=15;
+  } else { y+=3; }
+
+  // ── COMPLÉMENTS
+  const ex=rec.extras||{};
+  const compRows=[];
+  if(ex.prime>0)   compRows.push(['Prime exceptionnelle','',ex.prime.toFixed(2)+' €']);
+  if(ex.trajet>0)  compRows.push(['Ind. de trajet','',ex.trajet.toFixed(2)+' €']);
+  if(ex.paniers>0&&ex.panierUnit>0)    compRows.push(['Panier non soumis',ex.paniers+' j. × '+ex.panierUnit.toFixed(2)+' €',(ex.paniers*ex.panierUnit).toFixed(2)+' €']);
+  if(ex.paniers>0&&ex.panierUnitTax>0) compRows.push(['Panier soumis (brut)',ex.paniers+' j. × '+ex.panierUnitTax.toFixed(2)+' €',(ex.paniers*ex.panierUnitTax).toFixed(2)+' €']);
+  if(ex.ikm?.total>0) compRows.push(['IKM ('+(ex.ikm.mode==='btp'?'BTP Zone '+ex.ikm.zoneSel:'Fiscal URSSAF')+')',ex.ikm.depot||'',ex.ikm.total.toFixed(2)+' €']);
+
+  if(compRows.length){
+    set(8,'bold',DARK); t('COMPLÉMENTS',M,y); y+=3; hline(y); y+=2;
+    doc.autoTable({
+      startY:y,body:compRows,theme:'plain',
+      styles:{fontSize:8,cellPadding:2,textColor:DARK},
+      columnStyles:{0:{cellWidth:65},1:{cellWidth:65,textColor:GRAY},2:{halign:'right',fontStyle:'bold',textColor:BLUE}},
+      margin:{left:M,right:M}
+    });
+    y=doc.lastAutoTable.finalY+4;
+  }
+
+  // ── ESTIMATION SALARIALE
+  if(ex.tauxHoraire>0){
+    const th=ex.tauxHoraire;
+    const brut=(Math.min(tot,BASE)/60)*th + (sup25/60)*th*1.25 + (sup50/60)*th*1.5;
+    const net=brut*0.773;
+    doc.setFillColor(...LIGHT); doc.roundedRect(M,y,W-2*M,14,2,2,'F');
+    set(8,'normal',GRAY);
+    t('Estimation brut (base '+th.toFixed(2)+' €/h)',M+4,y+6);
+    t('Net estimé (~77,3%)',M+4,y+11);
+    set(10,'bold',DARK); t(brut.toFixed(2)+' €',W-M-4,y+6,{align:'right'});
+    set(10,'bold',GREEN); t(net.toFixed(2)+' €',W-M-4,y+11,{align:'right'});
+    y+=19;
+  }
+
+  // ── VALIDATION + SIGNATURE
+  if(y>230){ doc.addPage(); y=20; }
+  set(8,'bold',DARK); t('VALIDATION',M,y); y+=3; hline(y); y+=5;
+  set(8,'normal',GRAY);
+  t('Validé par : '+(rec.validatedBy||'—'),M,y); y+=5;
+  t('Appréciation : '+'★'.repeat(rec.rating||0)+'☆'.repeat(5-(rec.rating||0)),M,y); y+=8;
+
+  // Cadres signatures
+  const sW=(W-2*M-10)/2;
+  set(8,'bold',DARK); t('Signature intérimaire',M,y); t('Visa employeur',M+sW+10,y);
+  y+=3;
+  doc.setDrawColor(200,210,230); doc.setLineWidth(0.4);
+  doc.roundedRect(M,y,sW,28,2,2);
+  doc.roundedRect(M+sW+10,y,sW,28,2,2);
+  if(ex.sigDataUrl){
+    try{ doc.addImage(ex.sigDataUrl,'PNG',M+2,y+2,sW-4,24); }catch(e){}
+  } else {
+    set(7,'normal',GRAY); t('(non capturée)',M+sW/2,y+14,{align:'center'});
+  }
+  y+=32;
+
+  // ── PIED DE PAGE
+  set(7,'normal',GRAY);
+  t('Généré le '+new Date().toLocaleDateString('fr-FR')+' par MonRélevé · proactifsysteme.com — Document non contractuel',W/2,289,{align:'center'});
+
+  // ── PARTAGE OU TÉLÉCHARGEMENT
+  const fname='releve-'+(rec.id||'semaine')+'.pdf';
+  const blob=doc.output('blob');
+  const file=new File([blob],fname,{type:'application/pdf'});
+  try{
+    if(navigator.share && navigator.canShare?.({files:[file]})){
+      await navigator.share({title:'Relevé d\'heures',text:'Relevé '+(rec.weekLabel||'')+' — '+(rec.weekDates||''),files:[file]});
+    } else {
+      doc.save(fname);
+      flash('✓ PDF enregistré : '+fname);
+    }
+  }catch(e){
+    if(e.name!=='AbortError') doc.save(fname);
+  }
+}
+
 function saveWeeks(w){ localStorage.setItem(WEEKS_KEY, JSON.stringify(w)); }
 function addWeek(rec){ const w=loadWeeks(); const idx=w.findIndex(x=>x.id===rec.id); if(idx>=0) w[idx]=rec; else w.push(rec); saveWeeks(w); }
 function getMonthWeeks(mk){ return loadWeeks().filter(w=>w.month===mk).sort((a,b)=>b.id.localeCompare(a.id)); }
@@ -697,8 +1551,10 @@ function toHM(min){ return Math.floor(min/60)+':'+String(min%60).padStart(2,'0')
   initCanvas();
   document.getElementById('btn_s0').onclick = go_s0;
   document.getElementById('btn_s1ag').onclick = go_s1ag;
-  document.querySelectorAll('.finput').forEach(el=>{ el.addEventListener('input',()=>{ if(el.value.trim()) el.classList.remove('invalid'); }); });
+  document.querySelectorAll('.finput').forEach(el=>{ el.addEventListener('input',()=>{ if(el.value.trim()) el.classList.remove('invalid'); debouncedSave(); }); });
   showTabBar(true);
+  checkDraft();
+  if(!checkRgpd()) buildDashboard();
 })();
 
 /* ══════════════════════════════════════
@@ -717,6 +1573,7 @@ function switchTab(t){
     slideToScreen('s_month');
   } else {
     setActiveTab('saisir');
+    buildDashboard();
     slideToScreen('s_upload');
   }
 }
@@ -797,9 +1654,12 @@ function buildMonthView(){
             <div class="wk-htot">${d.tot?fmtMin(d.tot):'—'}</div>
           </div>`;
         }).join('')}
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #F1F5FB;display:flex;justify-content:space-between;font-size:12px;">
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #F1F5FB;display:flex;justify-content:space-between;align-items:center;font-size:12px;">
           <span style="color:#64748B;">Validé par : ${w.validatedBy}</span>
-          <strong style="color:#2563EB;">${fmtMin(w.totalMin)}</strong>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <strong style="color:#2563EB;">${fmtMin(w.totalMin)}</strong>
+            <button onclick="exportPDF('${w.id}')" style="background:#2563EB;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">📤 PDF</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -877,6 +1737,32 @@ function buildWeek(){
           <button class="day-act-btn dab-clear" onclick="clearDay(${i},event)">🗑 Effacer</button>
           ${i<6?`<button class="day-act-btn dab-copy" onclick="copyFromDay(${i},event)">📋 Copier sur les suivants</button>`:''}
         </div>
+        <button class="extras-toggle" id="etog-${i}" onclick="toggleExtras(${i},event)">
+          ⊕ Compléments du jour<span class="extras-badge" id="ebadge-${i}" style="display:none;"></span>
+        </button>
+        <div class="extras-body" id="ebody-${i}">
+          <div class="check-row">
+            <label class="chk-pill${eData[i].ferie?' on':''}" id="cp-ferie-${i}">
+              <input type="checkbox" id="d${i}ferie" ${eData[i].ferie?'checked':''} onchange="onExtras(${i})"> 🏖 Jour férié
+            </label>
+            <label class="chk-pill${eData[i].astreinte?' on':''}" id="cp-astreinte-${i}">
+              <input type="checkbox" id="d${i}astreinte" ${eData[i].astreinte?'checked':''} onchange="onExtras(${i})"> 📡 Astreinte
+            </label>
+            <label class="chk-pill${eData[i].panier?' on':''}" id="cp-panier-${i}">
+              <input type="checkbox" id="d${i}panier" ${eData[i].panier?'checked':''} onchange="onExtras(${i})"> 🍱 Panier repas
+            </label>
+          </div>
+          <div class="num-row">
+            <div class="num-field">
+              <label>🌙 Heures de nuit</label>
+              <div class="num-wrap"><input type="number" min="0" max="12" step="0.5" placeholder="0" id="d${i}nuit" value="${eData[i].nuit||''}" oninput="onExtras(${i})"><span class="num-unit">h</span></div>
+            </div>
+            <div class="num-field">
+              <label>🚗 Km parcourus</label>
+              <div class="num-wrap"><input type="number" min="0" step="1" placeholder="0" id="d${i}km" value="${eData[i].km||''}" oninput="onExtras(${i})"><span class="num-unit">km</span></div>
+            </div>
+          </div>
+        </div>
       </div>`;
     container.appendChild(card);
     if(expandedDay===i){ card.classList.add('open'); document.getElementById(`dbody-${i}`).classList.add('open'); document.getElementById(`dchev-${i}`).style.transform='rotate(90deg)'; }
@@ -903,7 +1789,7 @@ function onT(i){
   if(pmS&&pmE){const d=m(pmE)-m(pmS);if(d>0)tot+=d;}
   dTots[i]=tot;
   document.getElementById(`dtot-${i}`).textContent=fmtMin(tot);
-  updateSum(i); calcWeekTotal();
+  updateSum(i); calcWeekTotal(); calcIkm(); debouncedSave();
 }
 
 function updateSum(i){
@@ -920,9 +1806,45 @@ function calcWeekTotal(){
   const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS||d.amE||d.pmE).length;
   document.getElementById('weekTotNum').textContent=fmtMin(tot);
   document.getElementById('weekTotSub').textContent=filled+' jour'+(filled>1?'s':'')+' renseigné'+(filled>1?'s':'');
+
+  // Heures supplémentaires — Code du travail art. L3121-22 / L3121-33
+  const BASE=35*60, LIM25=43*60;
+  const norm  = Math.min(tot, BASE);
+  const sup25 = Math.max(0, Math.min(tot, LIM25) - BASE);
+  const sup50 = Math.max(0, tot - LIM25);
+  const supTot = sup25 + sup50;
+  const card = document.getElementById('supCard');
+  if(!card) return;
+  if(tot > BASE){
+    card.style.display='';
+    // Mode paiement
+    const hN = document.getElementById('hNorm');  if(hN) hN.textContent = fmtMin(norm);
+    const h25 = document.getElementById('hSup25'); if(h25) h25.textContent = fmtMin(sup25);
+    const r25 = document.getElementById('row25');  if(r25) r25.style.display='';
+    const h50 = document.getElementById('hSup50'); if(h50) h50.textContent = fmtMin(sup50);
+    const r50 = document.getElementById('row50');  if(r50) r50.style.display = sup50>0?'flex':'none';
+    // Mode compteur
+    const hN2 = document.getElementById('hNorm2'); if(hN2) hN2.textContent = fmtMin(norm);
+    const hCpt = document.getElementById('hCpt');  if(hCpt) hCpt.textContent = fmtMin(supTot);
+  } else {
+    card.style.display='none';
+  }
+  calcSalaire();
 }
 
-function changeWeek(dir){ weekOffset+=dir; expandedDay=-1; buildWeek(); }
+function setSupMode(mode){
+  _supMode = mode;
+  document.getElementById('modePaie').style.display = mode==='paie' ? 'flex' : 'none';
+  document.getElementById('modeCpt').style.display  = mode==='cpt'  ? 'flex' : 'none';
+  document.getElementById('btnPaie').style.background = mode==='paie' ? '#2563EB' : 'transparent';
+  document.getElementById('btnPaie').style.color      = mode==='paie' ? '#fff'    : '#64748B';
+  document.getElementById('btnCpt').style.background  = mode==='cpt'  ? '#2563EB' : 'transparent';
+  document.getElementById('btnCpt').style.color       = mode==='cpt'  ? '#fff'    : '#64748B';
+  document.getElementById('modePaie').style.flexDirection = 'column';
+  document.getElementById('modeCpt').style.flexDirection  = 'column';
+}
+
+function changeWeek(dir){ weekOffset+=dir; expandedDay=-1; eData=mkEData(); buildWeek(); resetWeekExtras(); }
 
 /* ── FLASH FEEDBACK ── */
 function flash(msg,color){
@@ -954,12 +1876,372 @@ function _applyToDay(i,amS,amE,pmS,pmE,tot){
   updateSum(i);
 }
 
+/* ── EXTRAS PAR JOUR ── */
+function toggleExtras(i,e){ if(e) e.stopPropagation();
+  const body=document.getElementById(`ebody-${i}`);
+  body.classList.toggle('open');
+  const tg=document.getElementById(`etog-${i}`);
+  tg.textContent=''; // reset
+  const isOpen=body.classList.contains('open');
+  tg.innerHTML=(isOpen?'⊖':'⊕')+' Compléments du jour<span class="extras-badge" id="ebadge-'+i+'" style="display:none;"></span>';
+  updateExtrasBadge(i);
+}
+
+function onExtras(i){
+  const ferie   = document.getElementById(`d${i}ferie`)?.checked||false;
+  const astreinte = document.getElementById(`d${i}astreinte`)?.checked||false;
+  const panier  = document.getElementById(`d${i}panier`)?.checked||false;
+  const nuit    = parseFloat(document.getElementById(`d${i}nuit`)?.value)||0;
+  const km      = parseInt(document.getElementById(`d${i}km`)?.value)||0;
+  eData[i]={ferie,astreinte,panier,nuit,km};
+  // sync pill style
+  ['ferie','astreinte','panier'].forEach(f=>{
+    const el=document.getElementById(`cp-${f}-${i}`);
+    if(el) el.classList.toggle('on', eData[i][f]);
+  });
+  updateExtrasBadge(i);
+  updatePanierCount();
+}
+
+function updateExtrasBadge(i){
+  const e=eData[i], badge=document.getElementById(`ebadge-${i}`), tg=document.getElementById(`etog-${i}`);
+  const tags=[];
+  if(e.ferie) tags.push('Férié');
+  if(e.astreinte) tags.push('Astreinte');
+  if(e.panier) tags.push('Panier');
+  if(e.nuit>0) tags.push(e.nuit+'h nuit');
+  if(e.km>0) tags.push(e.km+'km');
+  if(badge){ badge.textContent=tags.join(' · '); badge.style.display=tags.length?'':'none'; }
+  if(tg) tg.classList.toggle('has-data', tags.length>0);
+}
+
+/* ══════════════════════════════════════
+   CALCULATEUR IKM / BTP
+══════════════════════════════════════ */
+let _ikmMode = 'fiscal';
+
+function toggleIkm(){
+  const body=document.getElementById('ikm-body');
+  const tog=document.getElementById('ikm-tog');
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  if(tog) tog.classList.toggle('has-data',!open);
+  debouncedSave();
+}
+
+function setIkmMode(mode){
+  _ikmMode = mode;
+  document.getElementById('ikm-fiscal').style.display = mode==='fiscal' ? '' : 'none';
+  document.getElementById('ikm-btp').style.display    = mode==='btp'    ? '' : 'none';
+  const active='border:2px solid #2563EB;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:#2563EB;color:#fff;cursor:pointer;font-family:inherit;';
+  const inactive='border:2px solid #E8EDF8;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:transparent;color:#94A3B8;cursor:pointer;font-family:inherit;';
+  document.getElementById('ikm-btn-f').style.cssText = mode==='fiscal' ? active : inactive;
+  document.getElementById('ikm-btn-b').style.cssText = mode==='btp'    ? active : inactive;
+  calcIkm();
+}
+
+let _ikmMap = null;
+let _ikmDepotCoords = null;
+let _ikmChantierCoords = null;
+
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371, r=d=>d*Math.PI/180;
+  const dLat=r(lat2-lat1), dLng=r(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(r(lat1))*Math.cos(r(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function zoneFromKm(km){
+  if(km<=10) return 1;
+  if(km<=20) return 2;
+  if(km<=30) return 3;
+  if(km<=40) return 4;
+  return 5;
+}
+
+function highlightZoneRow(){
+  const sel=parseInt(document.getElementById('ikm-zone-sel')?.value)||1;
+  const colors=['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+  for(let i=1;i<=5;i++){
+    const row=document.getElementById('ikm-zrow-'+i);
+    if(row) row.style.background = i===sel ? (colors[i-1]+'18') : '';
+    if(row) row.style.borderRadius = i===sel ? '8px' : '';
+    if(row) row.style.padding = i===sel ? '4px 6px' : '';
+  }
+}
+
+async function _geocodeAddr(addr, btnId, statId){
+  const btn=document.getElementById(btnId), stat=document.getElementById(statId);
+  if(btn) btn.textContent='⏳';
+  if(stat){ stat.textContent='Recherche…'; stat.style.display=''; stat.style.color='#94A3B8'; }
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&countrycodes=fr`,{headers:{'Accept-Language':'fr'}});
+    const data=await res.json();
+    if(!data.length){ if(stat){ stat.textContent='⚠ Adresse introuvable'; stat.style.color='#EF4444'; } if(btn) btn.textContent='📍'; return null; }
+    if(stat){ stat.textContent='✓ '+data[0].display_name.split(',').slice(0,3).join(', '); stat.style.color='#059669'; }
+    if(btn) btn.textContent='📍';
+    return {lat:parseFloat(data[0].lat), lng:parseFloat(data[0].lon)};
+  }catch(e){
+    if(stat){ stat.textContent='⚠ Erreur réseau'; stat.style.color='#EF4444'; }
+    if(btn) btn.textContent='📍';
+    return null;
+  }
+}
+
+async function geocodeDepot(){
+  const addr=(document.getElementById('ikm-depot-adr')?.value||'').trim();
+  if(!addr){ flash('⚠ Saisissez l\'adresse du dépôt','#F59E0B'); return; }
+  const coords=await _geocodeAddr(addr,'ikm-geo-btn','ikm-geo-status');
+  if(!coords) return;
+  _ikmDepotCoords=coords;
+  showIkmMap();
+}
+
+async function geocodeChantier(){
+  const addr=(document.getElementById('ikm-chantier-adr')?.value||'').trim();
+  if(!addr){ flash('⚠ Saisissez l\'adresse du chantier','#F59E0B'); return; }
+  if(!_ikmDepotCoords){ flash('⚠ Localisez d\'abord le dépôt','#F59E0B'); return; }
+  const coords=await _geocodeAddr(addr,'ikm-chantier-btn','ikm-chantier-status');
+  if(!coords) return;
+  _ikmChantierCoords=coords;
+  showIkmMap();
+}
+
+function showIkmMap(){
+  if(!_ikmDepotCoords) return;
+  const wrap=document.getElementById('ikm-map-wrap');
+  if(!wrap) return;
+  wrap.style.display='';
+  if(_ikmMap){ _ikmMap.remove(); _ikmMap=null; }
+
+  const {lat,lng}=_ikmDepotCoords;
+  let centerLat=lat, centerLng=lng, zoom=9;
+
+  if(_ikmChantierCoords){
+    centerLat=(lat+_ikmChantierCoords.lat)/2;
+    centerLng=(lng+_ikmChantierCoords.lng)/2;
+    const km=haversineKm(lat,lng,_ikmChantierCoords.lat,_ikmChantierCoords.lng);
+    zoom=km<5?13:km<15?11:km<30?10:km<60?9:8;
+  }
+
+  _ikmMap=L.map('ikm-map',{center:[centerLat,centerLng],zoom,zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(_ikmMap);
+
+  // Icônes personnalisées
+  const mkIcon=(bg,emoji)=>L.divIcon({html:`<div style="background:${bg};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);">${emoji}</div>`,className:'',iconSize:[28,28],iconAnchor:[14,14]});
+
+  L.marker([lat,lng],{icon:mkIcon('#2563EB','🏢')}).addTo(_ikmMap).bindPopup('Dépôt');
+
+  // Cercles zones (du plus grand au plus petit pour éviter le masquage)
+  const zonesDef=[
+    {r:50000,color:'#8B5CF6'},{r:40000,color:'#EF4444'},
+    {r:30000,color:'#F59E0B'},{r:20000,color:'#10B981'},{r:10000,color:'#3B82F6'},
+  ];
+  zonesDef.forEach(z=>{
+    L.circle([lat,lng],{radius:z.r,color:z.color,fillColor:z.color,fillOpacity:0.05,weight:2}).addTo(_ikmMap);
+  });
+
+  // Chantier
+  if(_ikmChantierCoords){
+    const {lat:cl,lng:cg}=_ikmChantierCoords;
+    const km=haversineKm(lat,lng,cl,cg);
+
+    L.marker([cl,cg],{icon:mkIcon('#EF4444','🏗')}).addTo(_ikmMap).bindPopup(`Chantier — ${km.toFixed(1)} km du dépôt`);
+    L.polyline([[lat,lng],[cl,cg]],{color:'#EF4444',weight:2,dashArray:'6,4',opacity:.8}).addTo(_ikmMap);
+
+    // Distance badge
+    const badge=document.getElementById('ikm-dist-badge');
+    if(badge){ badge.textContent=km.toFixed(1)+' km à vol d\'oiseau'; badge.style.display=''; }
+
+    // Auto-sélection de la zone
+    const zone=zoneFromKm(km);
+    const sel=document.getElementById('ikm-zone-sel');
+    if(sel) sel.value=zone;
+
+    // Badge zone détectée
+    const det=document.getElementById('ikm-zone-detected');
+    if(det){ det.style.display='flex'; }
+    const zLabels=['','Zone I ≤10km','Zone II 11-20km','Zone III 21-30km','Zone IV 31-40km','Zone V 41-50km'];
+    const zl=document.getElementById('ikm-zone-label'); if(zl) zl.textContent=zLabels[zone];
+    const dl=document.getElementById('ikm-dist-label'); if(dl) dl.textContent=km.toFixed(1)+' km';
+
+    highlightZoneRow();
+    calcIkm();
+  }
+
+  setTimeout(()=>{ if(_ikmMap) _ikmMap.invalidateSize(); },150);
+}
+
+function calcIkm(){
+  const jours = dTots.filter(d=>d>0).length;
+  if(_ikmMode==='fiscal'){
+    const taux  = parseFloat(document.getElementById('ikm-cv')?.value)||0.603;
+    const kmDay = parseInt(document.getElementById('ikm-km-day')?.value)||0;
+    const kmTot = kmDay * jours;
+    const total = kmTot * taux;
+    const lbl=document.getElementById('ikm-taux-lbl'); if(lbl) lbl.textContent=taux.toFixed(3).replace('.',',')+' €/km × '+jours+' j.';
+    const kt=document.getElementById('ikm-km-ttl');   if(kt)  kt.textContent=kmTot+' km';
+    const tt=document.getElementById('ikm-ttl-f');    if(tt)  tt.textContent=total.toFixed(2)+' €';
+  } else {
+    const zoneSel = parseInt(document.getElementById('ikm-zone-sel')?.value)||1;
+    const zRates = [0,
+      parseFloat(document.getElementById('ikm-z1')?.value)||0,
+      parseFloat(document.getElementById('ikm-z2')?.value)||0,
+      parseFloat(document.getElementById('ikm-z3')?.value)||0,
+      parseFloat(document.getElementById('ikm-z4')?.value)||0,
+      parseFloat(document.getElementById('ikm-z5')?.value)||0,
+    ];
+    const daily = zRates[zoneSel];
+    const total = daily * jours;
+    const tb=document.getElementById('ikm-taux-btp'); if(tb) tb.textContent=daily>0 ? daily.toFixed(2).replace('.',',')+' €/j' : '— €/j';
+    const jb=document.getElementById('ikm-jours-btp');if(jb) jb.textContent=jours+' j.';
+    const rb=document.getElementById('ikm-ttl-b');    if(rb) rb.textContent=daily>0 ? total.toFixed(2)+' €' : '— €';
+  }
+  // Badge résumé visible même quand la section est repliée
+  const ikmTotalEl = _ikmMode==='btp' ? document.getElementById('ikm-ttl-b') : document.getElementById('ikm-ttl-f');
+  const ikmTotal = parseFloat((ikmTotalEl?.textContent||'').replace(' €','').replace(',','.'))||0;
+  const badge = document.getElementById('ikm-badge');
+  if(badge){ badge.textContent=ikmTotal>0 ? ikmTotal.toFixed(2)+' €' : ''; badge.style.display=ikmTotal>0?'':'none'; }
+  calcSalaire();
+}
+
+/* ══════════════════════════════════════
+   SIMULATEUR DE SALAIRE
+══════════════════════════════════════ */
+function toggleSalBody(){
+  const body=document.getElementById('salBody'), chev=document.getElementById('salChevron');
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  if(chev) chev.style.transform=open?'':'rotate(180deg)';
+}
+
+function calcSalaire(){
+  const taux=parseFloat(document.getElementById('taux_horaire')?.value)||0;
+  const card=document.getElementById('salCard');
+  const tot=dTots.reduce((a,b)=>a+b,0);
+  if(!card) return;
+  card.style.display=''; // toujours visible
+  const calcZone=document.getElementById('salCalcBody');
+  const noHoursMsg=document.getElementById('salNoHours');
+  if(!taux || tot===0){
+    if(calcZone) calcZone.style.display='none';
+    if(noHoursMsg) noHoursMsg.style.display='';
+    const prev=document.getElementById('salNetPreview'); if(prev) prev.textContent='';
+    return;
+  }
+  if(calcZone) calcZone.style.display='';
+  if(noHoursMsg) noHoursMsg.style.display='none';
+  // Ouvrir la carte si elle était fermée
+  const body=document.getElementById('salBody');
+  if(body&&body.style.display==='none'){ toggleSalBody(); }
+
+  const BASE=35*60, LIM25=43*60;
+  const norm  =Math.min(tot,BASE);
+  const sup25 =Math.max(0,Math.min(tot,LIM25)-BASE);
+  const sup50 =Math.max(0,tot-LIM25);
+
+  // Majoration nuit: toutes les heures de nuit déclarées
+  const nuitH = eData.reduce((a,e)=>a+(e.nuit||0),0);
+  // Majoration fériés: heures travaillées les jours fériés
+  const ferieMin = dTots.reduce((a,d,i)=>a+(eData[i].ferie?d:0),0);
+  const ferieH   = ferieMin/60;
+
+  const mtNorm  = (norm/60)*taux;
+  const mtSup25 = (sup25/60)*taux*1.25;
+  const mtSup50 = (sup50/60)*taux*1.50;
+  const mtNuit  = nuitH*taux*0.25;    // supplément nuit (25% du taux × h nuit)
+  const mtFerie = ferieH*taux*1.00;   // supplément férié (+100% = doublé)
+
+  const panierDays = eData.filter(e=>e.panier).length;
+  const mtPanierExo = (parseFloat(document.getElementById('wk_panier_unit')?.value)||0)     * panierDays;
+  const mtPanierTax = (parseFloat(document.getElementById('wk_panier_unit_tax')?.value)||0) * panierDays;
+
+  // Panier soumis entre dans le brut imposable
+  const brut = mtNorm+mtSup25+mtSup50+mtNuit+mtFerie+mtPanierTax;
+
+  // Indemnités non soumises
+  const mtPanier = mtPanierExo;
+  const mtTrajet = parseFloat(document.getElementById('wk_trajet')?.value)||0;
+  const mtPrime  = parseFloat(document.getElementById('wk_prime')?.value)||0;
+  const ikmEl    = _ikmMode==='btp' ? document.getElementById('ikm-ttl-b') : document.getElementById('ikm-ttl-f');
+  const mtIkm    = parseFloat((ikmEl?.textContent||'').replace(' €','').replace(',','.'))||0;
+
+  const netBrut = brut*0.773;
+
+  // Mise à jour UI
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  const eur=(v)=>v.toFixed(2)+' €';
+  const showRow=(id,show)=>{ const el=document.getElementById(id); if(el) el.style.display=show?'':'none'; };
+
+  set('salHNorm', fmtMin(norm));   set('salMtNorm', eur(mtNorm));
+  set('salH25', fmtMin(sup25));    set('salMt25', eur(mtSup25));
+  set('salH50', fmtMin(sup50));    set('salMt50', eur(mtSup50));
+  set('salHNuit', nuitH.toFixed(1)+'h');   set('salMtNuit', eur(mtNuit));
+  set('salHFerie', ferieH.toFixed(1)+'h'); set('salMtFerie', eur(mtFerie));
+
+  showRow('salRow25', sup25>0);
+  showRow('salRow50', sup50>0);
+  showRow('salRowNuit',  nuitH>0);
+  showRow('salRowFerie', ferieH>0);
+
+  set('salBrut',  eur(brut));
+  set('salBrut2', eur(brut));
+  set('salMtPanierTax', eur(mtPanierTax)); showRow('salRowPanierTax', mtPanierTax>0);
+
+  set('salMtPanier', eur(mtPanier)); showRow('salRowPanier', mtPanier>0);
+  set('salMtTrajet', eur(mtTrajet)); showRow('salRowTrajet', mtTrajet>0);
+  set('salMtIkm',    eur(mtIkm));    showRow('salRowIkm',    mtIkm>0);
+  set('salMtPrime',  eur(mtPrime));  showRow('salRowPrime',  mtPrime>0);
+  const hasIndem = mtPanier>0||mtPanierTax>0||mtTrajet>0||mtIkm>0||mtPrime>0;
+  const noIndemEl=document.getElementById('salNoIndem'); if(noIndemEl) noIndemEl.style.display=hasIndem?'none':'';
+
+  set('salNet', eur(netBrut));
+  set('salNetPreview', '~'+eur(netBrut));
+}
+
+function updatePanierCount(){
+  const count   = eData.filter(e=>e.panier).length;
+  const unitExo = parseFloat(document.getElementById('wk_panier_unit')?.value)||0;
+  const unitTax = parseFloat(document.getElementById('wk_panier_unit_tax')?.value)||0;
+  const totExo  = count * unitExo;
+  const totTax  = count * unitTax;
+  const totWeek = totExo + totTax;
+  const totMois = totWeek * (52/12);
+
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('wk_panier_count', count+' j. / semaine');
+  s('wk_pan_cnt_exo', count+'j');
+  s('wk_pan_cnt_tax', count+'j');
+  s('wk_pan_tot_exo', unitExo>0 ? totExo.toFixed(2)+' €' : '— €');
+  s('wk_pan_tot_tax', unitTax>0 ? totTax.toFixed(2)+' €' : '— €');
+  s('wk_panier_total',  (unitExo>0||unitTax>0) ? totWeek.toFixed(2)+' €' : '— €');
+  s('wk_panier_mensuel',(unitExo>0||unitTax>0) ? totMois.toFixed(2)+' €' : '— €');
+  calcSalaire();
+}
+
+/* ── PHOTO JUSTIFICATIF ── */
+function onPhotoChange(){
+  const f=document.getElementById('wk_photo').files[0];
+  const lbl=document.getElementById('wk_photo_lbl'), wrap=document.getElementById('photoLabel');
+  if(f){ lbl.textContent='✓ '+f.name; wrap.classList.add('has-file'); }
+  else { lbl.textContent='Ajouter un justificatif'; wrap.classList.remove('has-file'); }
+}
+
 /* ── COPY DAY TO FOLLOWING DAYS ── */
 function copyFromDay(i,e){ if(e) e.stopPropagation();
   if(!dTots[i]){ flash('⚠ Ce jour n\'a pas d\'heures à copier','#F59E0B'); return; }
   const{amS,amE,pmS,pmE}=tData[i]; const tot=dTots[i];
-  for(let j=i+1;j<7;j++) _applyToDay(j,amS,amE,pmS,pmE,tot);
-  calcWeekTotal();
+  for(let j=i+1;j<7;j++){
+    _applyToDay(j,amS,amE,pmS,pmE,tot);
+    // copie extras
+    eData[j]={...eData[i]};
+    ['ferie','astreinte','panier'].forEach(f=>{ const el=document.getElementById(`cp-${f}-${j}`); if(el) el.classList.toggle('on',eData[j][f]); const inp=document.getElementById(`d${j}${f}`); if(inp) inp.checked=eData[j][f]; });
+    const ni=document.getElementById(`d${j}nuit`); if(ni) ni.value=eData[j].nuit||'';
+    const ki=document.getElementById(`d${j}km`); if(ki) ki.value=eData[j].km||'';
+    updateExtrasBadge(j);
+  }
+  calcWeekTotal(); updatePanierCount();
   flash('✓ Copié sur les '+(6-i)+' jour'+(6-i>1?'s':'')+' suivants');
 }
 
@@ -968,7 +2250,12 @@ function clearDay(i,e){ if(e) e.stopPropagation();
   _applyToDay(i,'','','','',0); dTots[i]=0;
   const as=document.getElementById(`d${i}as`);
   if(as){ as.value=''; document.getElementById(`d${i}ae`).value=''; document.getElementById(`d${i}ps`).value=''; document.getElementById(`d${i}pe`).value=''; document.getElementById(`dtot-${i}`).textContent=fmtMin(0); }
-  calcWeekTotal();
+  // clear extras
+  eData[i]={nuit:0,ferie:false,astreinte:false,panier:false,km:0};
+  ['ferie','astreinte','panier'].forEach(f=>{ const cp=document.getElementById(`cp-${f}-${i}`); if(cp) cp.classList.remove('on'); const inp=document.getElementById(`d${i}${f}`); if(inp) inp.checked=false; });
+  const ni=document.getElementById(`d${i}nuit`); if(ni) ni.value='';
+  const ki=document.getElementById(`d${i}km`); if(ki) ki.value='';
+  updateExtrasBadge(i); calcWeekTotal(); updatePanierCount();
   flash('Jour effacé','#94A3B8');
 }
 
@@ -1017,14 +2304,20 @@ function go_s0(){
 function go_s1ag(){
   const rq=['ag_nom','ag_siret','ag_adr','ag_resp']; markInvalid(rq);
   if(rq.some(id=>!req(id))){ document.getElementById('e1ag').classList.add('on'); return; }
-  document.getElementById('e1ag').classList.remove('on'); slide('s1_ag','s2_hr');
+  document.getElementById('e1ag').classList.remove('on');
+  // Badge mission dynamique
+  const eu = _extracted.euNom || req('ag_nom') || 'Mission';
+  const ref = _extracted.contrat || req('i_contrat') || '';
+  document.getElementById('missionBadge').textContent = '🏭 ' + eu + (ref ? ' — ' + ref : '');
+  slide('s1_ag','s2_hr');
 }
 function go_hr(){
   if(dTots.every(d=>d===0)){ document.getElementById('eHr').classList.add('on'); return; }
   document.getElementById('eHr').classList.remove('on');
   const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS).length;
   document.getElementById('clDate').textContent=document.getElementById('weekDates').textContent;
-  document.getElementById('clSub').textContent=filled+' jour(s) · Entrepôt logistique';
+  const missionLabel = _extracted.euNom || req('ag_nom') || 'Mission';
+  document.getElementById('clSub').textContent=filled+' jour(s) · '+missionLabel;
   document.getElementById('clTot').textContent=fmtMin(tot);
   slide('s2_hr','s3_cl');
 }
@@ -1038,6 +2331,10 @@ function go_cl(){
   document.getElementById('rTot').textContent=fmtMin(tot);
   document.getElementById('sigName').textContent='Signature de : '+req('i_prenom')+' '+req('i_nom');
   document.getElementById('fbD').textContent=document.getElementById('weekDates').textContent;
+  const fbM=_extracted.euNom||req('ag_nom')||'Mission';
+  const fbR=_extracted.contrat||req('i_contrat')||'—';
+  const fm=document.getElementById('fbMission'); if(fm) fm.textContent=fbM;
+  const fr=document.getElementById('fbRef'); if(fr) fr.textContent=fbR;
   slide('s3_cl','s4_sig');
 }
 function go_sig(){
@@ -1052,6 +2349,7 @@ function submit(){
   const wDates=document.getElementById('weekDates').textContent;
   const wNum=document.getElementById('weekNum').textContent;
   const interimaire=req('i_prenom')+' '+req('i_nom');
+  const iInfo={nom:req('i_nom'),prenom:req('i_prenom'),qualif:req('i_qualif'),contrat:req('i_contrat'),tel:req('i_tel'),email:req('i_email'),agNom:req('ag_nom'),agSiret:req('ag_siret'),agAdr:req('ag_adr'),agCp:req('ag_cp'),agVille:req('ag_ville'),agTel:req('ag_tel'),agResp:req('ag_resp')};
   const validBy=req('cl_nom')+', '+req('cl_qualite');
 
   // Save to localStorage
@@ -1059,7 +2357,26 @@ function submit(){
   const monthKey=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0');
   const wId=mon.getFullYear()+'-W'+isoWeek(mon);
   const dayRecs=DAY_NAMES.map((dn,i)=>({name:dn,...tData[i],tot:dTots[i]}));
-  addWeek({ id:wId, weekLabel:wNum, weekDates:wDates, month:monthKey, days:dayRecs, totalMin:tot, filled, interimaire, validatedBy:validBy, rating:_r });
+  const prime=parseFloat(document.getElementById('wk_prime')?.value)||0;
+  const trajet=parseFloat(document.getElementById('wk_trajet')?.value)||0;
+  const kmTotal=parseInt(document.getElementById('wk_km_total')?.value)||0;
+  const paniers=eData.filter(e=>e.panier).length;
+  const panierUnit=parseFloat(document.getElementById('wk_panier_unit')?.value)||0;
+  const panierUnitTax=parseFloat(document.getElementById('wk_panier_unit_tax')?.value)||0;
+  const tauxHoraire=parseFloat(document.getElementById('taux_horaire')?.value)||0;
+  const comment=document.getElementById('wk_comment')?.value||'';
+  const hasPhoto=!!(document.getElementById('wk_photo')?.files[0]);
+  const sigDataUrl=(()=>{try{const c=document.getElementById('sigCanvas');return c?c.toDataURL('image/png'):null;}catch(e){return null;}})();
+  const extrasDay=eData.map(e=>({...e}));
+  const ikmZonesSel = parseInt(document.getElementById('ikm-zone-sel')?.value)||1;
+  const ikmDepot = document.getElementById('ikm-depot-adr')?.value||'';
+  const ikmBtpRates = [1,2,3,4,5].map(z=>parseFloat(document.getElementById('ikm-z'+z)?.value)||0);
+  const ikmTotal = _ikmMode==='btp' ? (ikmBtpRates[ikmZonesSel-1]*(dTots.filter(d=>d>0).length)) : (parseFloat(document.getElementById('ikm-ttl-f')?.textContent)||0);
+  const weekRec={ id:wId, weekLabel:wNum, weekDates:wDates, month:monthKey, days:dayRecs, totalMin:tot, filled, interimaire, iInfo, validatedBy:validBy, rating:_r, extras:{prime,trajet,kmTotal,paniers,panierUnit,panierUnitTax,tauxHoraire,sigDataUrl,comment,hasPhoto,days:extrasDay,ikm:{mode:_ikmMode,depot:ikmDepot,zoneSel:ikmZonesSel,btpRates:ikmBtpRates,total:ikmTotal}} };
+  _lastWId=wId;
+  addWeek(weekRec);
+  clearDraft();
+  syncCloud(weekRec);
 
   document.getElementById('sNom').textContent=interimaire;
   document.getElementById('sWeek').textContent=wDates;
@@ -1071,17 +2388,27 @@ function submit(){
   slide('s5_fb','s6_ok');
 }
 
+function resetWeekExtras(){
+  ['wk_prime','wk_trajet','wk_comment','wk_panier_unit','wk_panier_unit_tax','wk_km_total'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const cEl=document.getElementById('wk_panier_count'); if(cEl) cEl.textContent='0 j.';
+  const tEl=document.getElementById('wk_panier_total'); if(tEl) tEl.textContent='— €';
+  const ph=document.getElementById('wk_photo'); if(ph) ph.value='';
+  const lbl=document.getElementById('wk_photo_lbl'); if(lbl) lbl.textContent='Ajouter un justificatif';
+  const wrap=document.getElementById('photoLabel'); if(wrap) wrap.classList.remove('has-file');
+}
+
 function newEntry(){
   _r=0; _sig=false; weekOffset=0; expandedDay=-1;
-  tData=mkData(); dTots=Array(7).fill(0);
+  tData=mkData(); dTots=Array(7).fill(0); eData=mkEData();
   document.querySelectorAll('.star').forEach(s=>s.classList.remove('lit'));
   document.getElementById('rtxt').textContent='Touchez une étoile pour noter';
   document.getElementById('cmtTxt').value='';
   document.querySelectorAll('.finput').forEach(el=>{ el.value=''; el.classList.remove('invalid'); });
   document.querySelectorAll('.err').forEach(e=>e.classList.remove('on'));
-  clrSig(); buildWeek();
+  clrSig(); buildWeek(); resetWeekExtras();
   setActiveTab('saisir'); showTabBar(true);
   resetUpload();
+  buildDashboard();
   slideToScreen('s_upload');
 }
 
@@ -1121,7 +2448,14 @@ function resetUpload(){
 }
 
 function skipUpload(){
-  slide('s_upload','s0');
+  _extracted = {};
+  showTabBar(true);
+  setActiveTab('saisir');
+  // reset upZone pour la prochaine fois
+  document.getElementById('upZone').style.display='';
+  document.getElementById('upLoading').style.display='none';
+  document.getElementById('upResult').style.display='none';
+  slideToScreen('s0');
 }
 
 function continueFromExtract(){
@@ -1177,21 +2511,27 @@ function parseContract(txt){
   const datM = txt.match(/Dur[eé]e de la mission\s*:?\s*du\s+(\d{2}\/\d{2}\/\d{4})\s+au\s+(\d{2}\/\d{2}\/\d{4})/i);
   if(datM){ d.dateDebut=datM[1]; d.dateFin=datM[2]; }
 
-  // Téléphone agence
-  const telM = txt.match(/Tel\s*:?\s*([\d\s]{10,14})/i);
-  if(telM) d.agTel=telM[1].trim().replace(/\s+/g,' ');
+  // Téléphone agence (fixe 01-05/08-09 en priorité, sinon mobile 06/07)
+  const telM = txt.match(/T[eé]l[eé]?(?:phone)?\s*\.?\s*:?\s*(0[1-58-9][\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2})/i)
+             ||txt.match(/T[eé]l[eé]?(?:phone)?\s*\.?\s*:?\s*((?:06|07)[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2})/i);
+  if(telM) d.agTel=telM[1].replace(/[\s.\-]/g,'');
 
   // SIRET agence
   const siretM = txt.match(/Siret\s*:?\s*(\d{9,14})/i);
   if(siretM) d.agSiret=siretM[1];
 
-  // Adresse agence — ligne numérique après le nom d'agence
-  const adrM = txt.match(/(\d+\s+[A-Z\s''ÉÈÊÀÂÎÔÙÛÇ-]+)\s*\n\s*(\d{5})\s+([A-Z\s-]+)\s*\nTel/i);
-  if(adrM){ d.agAdr=adrM[1].trim(); d.agCp=adrM[2]; d.agVille=adrM[3].trim(); }
+  // Adresse agence — format inline: "111 AVENUE D'AUVERGNE 43100 BRIOUDE Tel"
+  const _voies = 'avenue|rue|boulevard|bd\\.?|all[eé]e|place|chemin|impasse|route|voie|za\\b|zi\\b|zone|cit[eé]|r[eé]sidence|passage';
+  const adrInM = txt.match(new RegExp('(\\d+\\s+(?:'+_voies+')[^\\d\\n]{1,55}?)\\s*(\\d{5})\\s+([A-Z\\u00C0-\\u00FF][A-Z\\s\\u00C0-\\u00FF-]{2,30}?)\\s*(?:Tel|T[eé]l|\\s{3}|\\n|$)','i'));
+  if(adrInM){ d.agAdr=adrInM[1].trim(); d.agCp=adrInM[2]; d.agVille=adrInM[3].trim(); }
   else {
-    // Fallback: cherche un code postal + ville avant "Tel"
-    const cpM = txt.match(/(\d{5})\s+([A-Z][A-Z\s-]+)\s+Tel/i);
-    if(cpM){ d.agCp=cpM[1]; d.agVille=cpM[2].trim(); }
+    // Fallback multi-ligne: adresse \n CP VILLE \n Tel
+    const adrMultiM = txt.match(new RegExp('(\\d+\\s+(?:'+_voies+')[^\\n]{2,60})\\s*\\n\\s*(\\d{5})\\s+([A-Z\\u00C0-\\u00FF][A-Z\\s-]{2,30}?)(?:\\n|Tel|T[eé]l|$)','im'));
+    if(adrMultiM){ d.agAdr=adrMultiM[1].trim(); d.agCp=adrMultiM[2]; d.agVille=adrMultiM[3].trim(); }
+    else {
+      const cpM = txt.match(/(\d{5})\s+([A-ZÉÈÊÀÂÎÔÙÛÇ][A-Z\s-]{2,30})(?:\n|Tel|Tél|\s{3})/i);
+      if(cpM){ d.agCp=cpM[1]; d.agVille=cpM[2].trim(); }
+    }
   }
 
   // Intérimaire — "M NOM PRENOM" ou "MME/MLLE PRENOM NOM"
@@ -1222,9 +2562,51 @@ function parseContract(txt){
   const euM = txt.match(/Entreprise utilisatrice.*?:\s*\n?\s*([A-ZÉÈÊÀÂÎÔÙÛÇ][A-ZÉÈÊÀÂÎÔÙÛÇ\s&.-]+?)(?:\n|LIEU|RN\s|\d{5})/i);
   if(euM) d.euNom=euM[1].trim();
 
+  // Responsable / consultant agence intérim
+  const _nm = '[A-ZÉÈÊÀÂÎÔÙÛÇa-zéèêàâîôùûç\\s\\-]{3,40}?';
+  const respM = txt.match(new RegExp('[Vv]otre\\s+(?:consultant(?:e)?|contact|interlocuteur(?:trice)?)\\s*:?\\s*('+_nm+')(?:\\n|Tel|Tél|\\d)'))
+              ||txt.match(new RegExp('[Cc]onsultant(?:e)?\\s*(?:en\\s*charge)?\\s*:?\\s*('+_nm+')(?:\\n|Tel|Tél|\\d)'))
+              ||txt.match(new RegExp('[Cc]harg[eé](?:e)?\\s*(?:de\\s*(?:mission|recrutement|compte))?\\s*:?\\s*('+_nm+')(?:\\n|Tel|Tél|\\d)'))
+              ||txt.match(new RegExp('[Rr]esponsable\\s*(?:d[ue]?\\s*(?:compte|recrutement|agence))?\\s*:?\\s*('+_nm+')(?:\\n|Tel|Tél|\\d)'))
+              ||txt.match(new RegExp('(?:Contact|Interlocuteur(?:trice)?|Gestionnaire|Recruteur(?:se)?)\\s*:?\\s*('+_nm+')(?:\\n|Tel|Tél|\\d)','i'));
+  if(respM) d.agResp=respM[1].trim();
+  // Fallback : nom sur la ligne juste avant "Tel" si rien trouvé
+  if(!d.agResp && d.agTel){
+    const telEsc = d.agTel.replace(/\d{2}/g, s => s+'[\\s.\\-]?').slice(0,-5);
+    const lineBeforeTel = txt.match(/([A-ZÉÈÊÀÂÎÔÙÛÇ][a-zéèêàâîôùûç]+(?:\s+[A-ZÉÈÊÀÂÎÔÙÛÇ][A-Za-zéèêàâîôùûç-]+){1,3})\s*\n[^\n]*T[eé]l/);
+    if(lineBeforeTel) d.agResp = lineBeforeTel[1].trim();
+  }
+
   // Personne à demander (validateur côté EU)
   const contactM = txt.match(/Personne [àa] demander\s*:?\s*(.+?)(?:\n|Né)/i);
   if(contactM) d.contact=contactM[1].trim();
+
+  // Panier repas — deux types (Start People: INDEM PANIER JOUR=exo, PRIME DE PANIER=soumis)
+  const panierExoM = txt.match(/INDEM(?:NITE|NITE|NITÉ)?\s+(?:DE\s+)?PANIER\s+(?:JOUR\s+)?(\d+[.,]\d{1,3})/i)
+                   ||txt.match(/[Ii]ndemnit[eé]\s+(?:de\s+)?[Pp]anier\s+(?:jour\s+)?(\d+[.,]\d{1,3})/i);
+  if(panierExoM) d.panierMontant = panierExoM[1].replace(',','.');
+  else {
+    const panierM = txt.match(/[Pp]anier\s*(?:repas)?\s*:?\s*(\d+[.,]\d{1,2})/i)
+                  ||txt.match(/[Ii]ndemnit[eé]\s*(?:de\s*)?repas\s*:?\s*(\d+[.,]\d{1,2})/i);
+    if(panierM) d.panierMontant = panierM[1].replace(',','.');
+  }
+  const panierTaxM = txt.match(/PRIME\s+DE\s+PANIER\s+(\d+[.,]\d{1,3})/i);
+  if(panierTaxM) d.panierMontantTax = panierTaxM[1].replace(',','.');
+
+  // Indemnité kilométrique taux
+  const ikmM = txt.match(/[Ii]ndemni[tté][eé]\s*kilo?m[eé]trique\s*:?\s*(\d+[.,]\d{1,4})/i);
+  if(ikmM) d.ikmTaux = ikmM[1].replace(',','.');
+
+  // Taux horaire brut — "Salaire de référence : 13,000 € pour 1 H" (Start People)
+  const tauxM = txt.match(/[Tt]aux\s*horaire\s*(?:brut)?\s*:?\s*(\d{1,3}[.,]\d{1,4})/i)
+              ||txt.match(/[Ss]alaire\s*(?:de\s*(?:base|r[eé]f[eé]rence)|horaire)\s*:?\s*(\d{1,3}[.,]\d{1,4})/i)
+              ||txt.match(/HEURES\s+NORMALES\s+(\d{1,3}[.,]\d{1,4})/i)
+              ||txt.match(/(\d{1,3}[.,]\d{2})\s*€?\s*(?:\/h|\/heure|par heure|pour 1 H)/i);
+  if(tauxM) d.tauxHoraire = tauxM[1].replace(',','.');
+
+  // Téléphone intérimaire (06/07 — mobile personnel, distinct du Tel agence)
+  const iTelM = txt.match(/(?:T[eé]l[eé]phone|Mobile|T[eé]l\.?|Port(?:able)?)\s*:?\s*((?:06|07)[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2})/i);
+  if(iTelM) d.iTel = iTelM[1].replace(/[\s.\-]/g,'');
 
   return d;
 }
@@ -1243,7 +2625,7 @@ function showExtractionResult(d, rawText){
   document.getElementById('upLoading').style.display='none';
 
   const items = [];
-  if(d.iPrenom&&d.iNom)    items.push(['Intérimaire', d.iPrenom+' '+d.iNom]);
+  if(d.iPrenom&&d.iNom)    items.push(['Intérimaire', d.iPrenom+' '+d.iNom+(d.iTel?' · 📱 '+d.iTel:'')]);
   if(d.agNom)               items.push(['Agence', d.agNom]);
   if(d.agSiret)             items.push(['SIRET', d.agSiret]);
   if(d.contrat)             items.push(['N° contrat', d.contrat]);
@@ -1257,6 +2639,8 @@ function showExtractionResult(d, rawText){
       '\n'+[...days].sort().map(i=>dn[i]).join(', ')
     ]);
   }
+  if(d.agResp)  items.push(['Responsable agence', d.agResp+(d.agTel?' · 📞 '+d.agTel:'')]);
+  else if(d.agTel) items.push(['Tél agence', '📞 '+d.agTel]);
   if(d.contact) items.push(['Validateur EU', d.contact]);
 
   const found = items.length;
@@ -1274,6 +2658,13 @@ function showExtractionResult(d, rawText){
       '<div style="text-align:center;padding:16px;color:#94A3B8;font-size:13px;">Aucun champ reconnu automatiquement.<br>Vous pourrez tout remplir manuellement.</div>';
   }
 
+  // Bouton "Voir le contrat" — permet de lire le PDF extrait et saisir les champs manquants
+  const dbgWrap = document.getElementById('exDebugWrap');
+  if(dbgWrap){
+    document.getElementById('exDebugTxt').textContent = rawText||'';
+    dbgWrap.style.display='';
+  }
+
   document.getElementById('upResult').style.display='';
 }
 
@@ -1286,6 +2677,7 @@ function prefillForms(d){
   set('i_prenom', d.iPrenom);
   set('i_qualif', d.iQualif);
   set('i_contrat',d.contrat);
+  if(d.iTel) set('i_tel', d.iTel);
 
   // Agence
   set('ag_nom',   d.agNom);
@@ -1294,6 +2686,7 @@ function prefillForms(d){
   set('ag_cp',    d.agCp);
   set('ag_ville', d.agVille);
   set('ag_tel',   d.agTel);
+  if(d.agResp) set('ag_resp', d.agResp);
 
   // Validateur EU (pré-rempli pour l'écran client)
   if(d.contact){
@@ -1302,6 +2695,18 @@ function prefillForms(d){
     if(parts.length>=2) set('cl_nom', d.contact);
   }
   if(d.euNom) set('cl_qualite', 'Resp. — '+d.euNom);
+
+  // Panier repas et IKM depuis contrat
+  if(d.panierMontant) { const el=document.getElementById('wk_panier_unit'); if(el){ el.value=d.panierMontant; updatePanierCount(); } }
+  if(d.panierMontantTax) { const el=document.getElementById('wk_panier_unit_tax'); if(el){ el.value=d.panierMontantTax; updatePanierCount(); } }
+  if(d.tauxHoraire) { const el=document.getElementById('taux_horaire'); if(el&&!el.value) el.value=d.tauxHoraire; }
+
+  // Adresse dépôt BTP — pré-rempli depuis l'adresse EU/agence du contrat
+  const depotEl = document.getElementById('ikm-depot-adr');
+  if(depotEl && !depotEl.value){
+    const adrParts = [d.agAdr, d.agCp, d.agVille].filter(Boolean);
+    if(adrParts.length) depotEl.value = adrParts.join(', ');
+  }
 
   // Horaires (template + appliquer aux jours contractuels)
   if(d.horAmS && d.horPmS){
@@ -1320,6 +2725,163 @@ function prefillForms(d){
       calcWeekTotal();
     }
   }
+
+  updateCallBtn();
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════ */
+function buildDashboard(){
+  const dash   = document.getElementById('dashHome');
+  const upZone = document.getElementById('upZone');
+  if(!dash||!upZone) return;
+
+  const weeks = loadWeeks();
+  let draft = null;
+  try{ const r=localStorage.getItem(DRAFT_KEY); if(r) draft=JSON.parse(r); }catch(e){}
+
+  // Pas de données → accueil import
+  if(!weeks.length && !draft){
+    dash.style.display='none';
+    upZone.style.display='';
+    return;
+  }
+
+  // Données présentes → dashboard
+  upZone.style.display='none';
+  dash.style.display='';
+
+  // ── Infos mission ──
+  const f  = draft?.form || {};
+  const lw = weeks.length ? weeks[weeks.length-1] : null;
+  const ii = lw?.iInfo || {};
+
+  const nom      = f.i_nom    || ii.nom    || '';
+  const prenom   = f.i_prenom || ii.prenom || '';
+  const qualif   = f.i_qualif || ii.qualif || '';
+  const agNom    = f.ag_nom   || ii.agNom  || '';
+  const agTel    = (f.ag_tel  || ii.agTel  || '').replace(/[\s.\-]/g,'');
+  const agResp   = f.ag_resp  || ii.agResp || '';
+  const contrat  = f.i_contrat|| ii.contrat|| '';
+  const tauxH    = parseFloat(f.taux_horaire||0) || lw?.extras?.tauxHoraire || 0;
+
+  // ── Stats semaine ──
+  const weekMins = draft?.dTots ? draft.dTots.reduce((a,b)=>a+b,0) : (lw?.totalMin||0);
+  const weekFilled = draft ? (draft.tData||[]).filter(d=>d.amS||d.pmS).length : (lw?.filled||0);
+
+  // ── Stats mois ──
+  const now      = new Date();
+  const mKey     = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const mWeeks   = weeks.filter(w=>w.month===mKey);
+  const monthMins= mWeeks.reduce((a,w)=>a+(w.totalMin||0),0) + (draft?.dTots ? draft.dTots.reduce((a,b)=>a+b,0) : 0);
+  const netEst   = tauxH ? Math.round(monthMins/60*tauxH*0.773) : 0;
+
+  // ── Historique récent ──
+  const recent = [...weeks].reverse().slice(0,4);
+
+  // ── Build HTML ──
+  let h = '';
+
+  // Carte mission
+  h += `<div style="background:linear-gradient(135deg,#1e3a8a,#0f172a);border-radius:16px;padding:16px;margin-bottom:14px;color:white;">
+    <div style="font-size:11px;letter-spacing:.08em;color:#93c5fd;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Mission en cours</div>
+    <div style="font-size:20px;font-weight:800;line-height:1.1;">${prenom} ${nom||'—'}</div>
+    ${qualif ? `<div style="font-size:13px;color:#bfdbfe;margin-top:3px;">${qualif}</div>` : ''}
+    <div style="font-size:12px;color:#93c5fd;margin-top:2px;">${agNom}</div>
+    ${contrat ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">📋 ${contrat}</div>` : ''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+      ${agResp ? `<span style="font-size:12px;color:#bfdbfe;">👤 ${agResp}</span>` : '<span></span>'}
+      ${agTel ? `<a href="tel:${agTel}" style="display:inline-flex;align-items:center;gap:5px;background:#22c55e;color:white;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;text-decoration:none;">📞 Appeler</a>` : ''}
+    </div>
+  </div>`;
+
+  // Stats semaine / mois
+  h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div style="background:white;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px #0001;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;font-weight:600;margin-bottom:6px;">Cette semaine</div>
+      <div style="font-size:26px;font-weight:800;color:#1e3a8a;line-height:1;">${fmtMin(weekMins)}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${weekFilled} jour${weekFilled>1?'s':''} ${draft?'· brouillon':''}</div>
+      ${draft ? `<div style="font-size:10px;color:#f59e0b;font-weight:600;margin-top:3px;">● En cours</div>` : '<div style="font-size:10px;color:#22c55e;font-weight:600;margin-top:3px;">✓ Validé</div>'}
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px #0001;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;font-weight:600;margin-bottom:6px;">Ce mois</div>
+      <div style="font-size:26px;font-weight:800;color:#1e3a8a;line-height:1;">${fmtMin(monthMins)}</div>
+      ${netEst ? `<div style="font-size:12px;color:#22c55e;font-weight:700;margin-top:4px;">≈ ${netEst.toLocaleString('fr-FR')} € net</div>` : `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">${mWeeks.length} sem. validée${mWeeks.length>1?'s':''}</div>`}
+    </div>
+  </div>`;
+
+  // Bouton nouveau relevé
+  h += `<button class="btn btn-blue" style="width:100%;min-height:50px;font-size:15px;margin-bottom:14px;" onclick="startNewReleve()">+ Nouveau relevé</button>`;
+
+  // Historique
+  if(recent.length){
+    h += `<div class="sec" style="margin-top:0;">Relevés récents</div>`;
+    recent.forEach(w => {
+      const stars = w.rating ? '⭐'.repeat(w.rating) : '';
+      const sup = w.extras?.tauxHoraire ? ` · ${Math.round(w.totalMin/60*w.extras.tauxHoraire*0.773).toLocaleString('fr-FR')} € net` : '';
+      h += `<div style="background:white;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px #0001;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;color:#1e3a6e;">${w.weekLabel} <span style="font-weight:400;font-size:12px;color:#94a3b8;">— ${w.weekDates}</span></div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">${fmtMin(w.totalMin||0)}${sup} ${stars}</div>
+        </div>
+        <button onclick="exportPDF('${w.id}')" style="flex-shrink:0;background:#f1f5f9;border:none;border-radius:10px;padding:7px 11px;font-size:13px;cursor:pointer;margin-left:10px;">📤</button>
+      </div>`;
+    });
+  }
+
+  h += `<div style="text-align:center;padding:16px 0 4px;">
+    <button onclick="openLegal('s_upload')" style="background:none;border:none;font-size:11px;color:#94a3b8;cursor:pointer;">Mentions légales · Politique de confidentialité</button>
+  </div>`;
+
+  dash.innerHTML = h;
+}
+
+function startNewReleve(){
+  document.getElementById('dashHome').style.display='none';
+  document.getElementById('upZone').style.display='';
+}
+
+function toggleContrat(){
+  const wrap = document.getElementById('exDebugTxtWrap');
+  const chev = document.getElementById('exDebugChevron');
+  const open = wrap.style.display === 'none';
+  wrap.style.display = open ? '' : 'none';
+  chev.textContent   = open ? '▲' : '▼';
+}
+
+/* ══════════════════════════════════════
+   RGPD / MENTIONS LÉGALES
+══════════════════════════════════════ */
+const RGPD_KEY = 'timepro_rgpd_ok';
+let _legalFrom = 's_upload';
+
+function checkRgpd(){
+  if(!localStorage.getItem(RGPD_KEY)){
+    slideToScreen('s_rgpd');
+    return true;
+  }
+  return false;
+}
+
+function acceptRgpd(){
+  localStorage.setItem(RGPD_KEY,'1');
+  buildDashboard();
+  slideToScreen('s_upload');
+}
+
+function openLegal(from){
+  _legalFrom = from || 's_upload';
+  slide(_legalFrom, 's_legal');
+}
+
+function deleteAllData(){
+  if(!confirm('Supprimer définitivement tous vos relevés, brouillons et paramètres ?')) return;
+  localStorage.removeItem(WEEKS_KEY);
+  localStorage.removeItem(DRAFT_KEY);
+  localStorage.removeItem(RGPD_KEY);
+  alert('Toutes vos données ont été supprimées.');
+  location.reload();
 }
 </script>
 </body>
