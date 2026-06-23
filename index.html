@@ -1229,6 +1229,7 @@ const DRAFT_KEY = 'timepro_draft';
 
 let weekOffset = 0, expandedDay = -1, monthOffset = 0;
 let _r = 0, _sig = false, _supMode = 'paie', _lastWId = null;
+let _ikmMode = 'fiscal';
 let tData = mkData(), dTots = Array(7).fill(0);
 let eData = mkEData();
 let _extracted = {};
@@ -1992,8 +1993,6 @@ function updateExtrasBadge(i){
 /* ══════════════════════════════════════
    CALCULATEUR IKM / BTP
 ══════════════════════════════════════ */
-let _ikmMode = 'fiscal';
-
 function toggleIkm(){
   const body=document.getElementById('ikm-body');
   const tog=document.getElementById('ikm-tog');
