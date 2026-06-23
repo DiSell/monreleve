@@ -532,11 +532,11 @@ textarea::placeholder{color:#B8C4D4;}
     <!-- Brouillon -->
     <div id="draftBanner" class="draft-banner" style="display:none;">
       <div class="draft-left">
-        <div class="draft-title">📝 Brouillon en cours</div>
+        <div class="draft-title">📝 Données restaurées</div>
         <div class="draft-age" id="draftAge">—</div>
       </div>
       <div class="draft-btns">
-        <button class="draft-btn-ok" onclick="doRestoreDraft()">Reprendre →</button>
+        <button class="draft-btn-ok" onclick="slide('s_upload','s0')">Continuer →</button>
         <button class="draft-btn-x" onclick="dismissDraft()">✕</button>
       </div>
     </div>
@@ -1325,6 +1325,21 @@ function debouncedSave(){
 
 function clearDraft(){ localStorage.removeItem(DRAFT_KEY); }
 
+function _applyDraft(d){
+  weekOffset=d.weekOffset||0;
+  tData=d.tData||mkData();
+  dTots=d.dTots||Array(7).fill(0);
+  eData=d.eData||mkEData();
+  _supMode=d._supMode||'paie';
+  _ikmMode=d._ikmMode||'fiscal';
+  _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el&&d.form&&d.form[id]!=null) el.value=d.form[id]; });
+  const zSel=document.getElementById('ikm-zone-sel'); if(zSel&&d.ikmZoneSel) zSel.value=d.ikmZoneSel;
+  const ikmBody=document.getElementById('ikm-body'); if(ikmBody) ikmBody.style.display=d.ikmOpen?'':'none';
+  const ikmTog=document.getElementById('ikm-tog'); if(ikmTog) ikmTog.classList.toggle('has-data',!!d.ikmOpen);
+  setIkmMode(_ikmMode);
+  buildWeek(); updatePanierCount(); calcIkm(); updateCallBtn();
+}
+
 function checkDraft(){
   try{
     const raw=localStorage.getItem(DRAFT_KEY);
@@ -1332,9 +1347,11 @@ function checkDraft(){
     const d=JSON.parse(raw);
     const hasData = Object.values(d.form||{}).some(v=>v&&v.trim()) || (d.tData&&d.tData.some(x=>x.amS||x.pmS));
     if(!hasData){ clearDraft(); return; }
+    // Restauration automatique des données — plus besoin de cliquer "Reprendre"
+    _applyDraft(d);
     const age=Date.now()-d.ts;
     const ageStr=age<3600000?Math.round(age/60000)+' min':Math.round(age/3600000)+'h';
-    document.getElementById('draftAge').textContent='Dernière sauvegarde : il y a '+ageStr;
+    document.getElementById('draftAge').textContent='Reprise automatique — sauvegardé il y a '+ageStr;
     document.getElementById('draftBanner').style.display='flex';
   }catch(e){ clearDraft(); }
 }
@@ -1342,18 +1359,7 @@ function checkDraft(){
 function doRestoreDraft(){
   try{
     const d=JSON.parse(localStorage.getItem(DRAFT_KEY));
-    weekOffset=d.weekOffset||0;
-    tData=d.tData||mkData();
-    dTots=d.dTots||Array(7).fill(0);
-    eData=d.eData||mkEData();
-    _supMode=d._supMode||'paie';
-    _ikmMode=d._ikmMode||'fiscal';
-    _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el&&d.form[id]!=null) el.value=d.form[id]; });
-    const zSel=document.getElementById('ikm-zone-sel'); if(zSel&&d.ikmZoneSel) zSel.value=d.ikmZoneSel;
-    const ikmBody=document.getElementById('ikm-body'); if(ikmBody) ikmBody.style.display=d.ikmOpen?'':'none';
-    const ikmTog=document.getElementById('ikm-tog'); if(ikmTog) ikmTog.classList.toggle('has-data',!!d.ikmOpen);
-    setIkmMode(_ikmMode);
-    buildWeek(); updatePanierCount(); calcIkm(); updateCallBtn();
+    _applyDraft(d);
     document.getElementById('draftBanner').style.display='none';
     flash('✓ Brouillon restauré !');
     slide('s_upload','s0');
