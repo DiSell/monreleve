@@ -661,7 +661,7 @@ textarea::placeholder{color:#B8C4D4;}
     <div class="sec">Identification</div>
     <div class="card">
       <div class="frow"><span class="flbl">Nom de l'agence <span class="req">*</span></span><input class="finput" id="ag_nom" type="text" placeholder="Adecco, Manpower…"></div>
-      <div class="frow mb0"><span class="flbl">N° SIRET <span class="req">*</span></span><input class="finput" id="ag_siret" type="text" placeholder="XXX XXX XXX 00000" maxlength="17"></div>
+      <div class="frow mb0"><span class="flbl">N° SIRET</span><input class="finput" id="ag_siret" type="text" placeholder="XXX XXX XXX 00000" maxlength="17"></div>
     </div>
     <div class="sec">Adresse</div>
     <div class="card">
@@ -673,7 +673,7 @@ textarea::placeholder{color:#B8C4D4;}
     </div>
     <div class="sec">Responsable</div>
     <div class="card">
-      <div class="frow"><span class="flbl">Nom du responsable <span class="req">*</span></span><input class="finput" id="ag_resp" type="text" placeholder="Marie Martin"></div>
+      <div class="frow"><span class="flbl">Nom du responsable</span><input class="finput" id="ag_resp" type="text" placeholder="Marie Martin"></div>
       <div class="frow mb0"><span class="flbl">Téléphone</span><div style="display:flex;gap:8px;align-items:center"><input class="finput" id="ag_tel" type="tel" placeholder="01 00 00 00 00" oninput="updateCallBtn()"><a id="ag_tel_call" href="#" onclick="return false;" style="display:none;flex-shrink:0;background:#22c55e;color:#fff;border-radius:50%;width:38px;height:38px;display:none;align-items:center;justify-content:center;font-size:18px;text-decoration:none;" title="Appeler l'agence">📞</a></div></div>
     </div>
     <div id="e1ag" class="err mt" style="margin-bottom:10px;">⚠ Renseignez les champs obligatoires (*).</div>
@@ -2325,7 +2325,7 @@ function go_s0(){
   showTabBar(false); slide('s0','s1_ag');
 }
 function go_s1ag(){
-  const rq=['ag_nom','ag_siret','ag_adr','ag_resp']; markInvalid(rq);
+  const rq=['ag_nom','ag_adr']; markInvalid(rq);
   if(rq.some(id=>!req(id))){ document.getElementById('e1ag').classList.add('on'); return; }
   document.getElementById('e1ag').classList.remove('on');
   // Badge mission dynamique
