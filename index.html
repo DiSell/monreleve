@@ -1543,9 +1543,9 @@ function toHM(min){ return Math.floor(min/60)+':'+String(min%60).padStart(2,'0')
    INIT
 ══════════════════════════════════════ */
 (function(){
-  // PDF.js worker
+  // PDF.js worker — désactivé pour compatibilité iOS/Chrome
   if(typeof pdfjsLib !== 'undefined')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
   seedDemo();
   buildWeek();
   initCanvas();
@@ -2482,7 +2482,7 @@ async function handlePDF(input, file){
     document.getElementById('upLoading').style.display='none';
     document.getElementById('upZone').style.display='';
     document.getElementById('upErr').style.display='block';
-    document.getElementById('upErr').textContent='⚠ Lecture impossible. Essayez un autre fichier.';
+    document.getElementById('upErr').textContent='⚠ ' + (e?.message||'Lecture impossible. Essayez un autre fichier.');
   }
 }
 
