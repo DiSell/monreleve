@@ -1035,12 +1035,6 @@ textarea::placeholder{color:#B8C4D4;}
           <span>Férié travaillé +100% <span style="color:#C4B5FD;font-size:11px;" id="salHFerie">0h</span></span>
           <strong id="salMtFerie">— €</strong>
         </div>
-        <hr class="sal-divider">
-        <div class="sal-total-row">
-          <span class="sal-lbl">Total brut</span>
-          <span class="sal-val" id="salBrut">— €</span>
-        </div>
-
         <!-- Dans le brut : panier soumis -->
         <div class="sal-row maj" id="salRowPanierTax" style="display:none;">
           <span>Panier soumis <span style="font-size:10px;opacity:.7;">(brut imposable)</span></span><strong id="salMtPanierTax">— €</strong>
@@ -1048,7 +1042,7 @@ textarea::placeholder{color:#B8C4D4;}
         <hr class="sal-divider">
         <div class="sal-total-row">
           <span class="sal-lbl">Total brut</span>
-          <span class="sal-val" id="salBrut2">— €</span>
+          <span class="sal-val" id="salBrut">— €</span>
         </div>
 
         <!-- Indemnités -->
@@ -2143,6 +2137,7 @@ function toggleSalBody(){
   const open=body.style.display!=='none';
   body.style.display=open?'none':'';
   if(chev) chev.style.transform=open?'':'rotate(180deg)';
+  if(!open) calcSalaire();
 }
 
 function calcSalaire(){
@@ -2215,7 +2210,6 @@ function calcSalaire(){
   showRow('salRowFerie', ferieH>0);
 
   set('salBrut',  eur(brut));
-  set('salBrut2', eur(brut));
   set('salMtPanierTax', eur(mtPanierTax)); showRow('salRowPanierTax', mtPanierTax>0);
 
   set('salMtPanier', eur(mtPanier)); showRow('salRowPanier', mtPanier>0);
@@ -2338,6 +2332,7 @@ function go_s1ag(){
   const eu = _extracted.euNom || req('ag_nom') || 'Mission';
   const ref = _extracted.contrat || req('i_contrat') || '';
   document.getElementById('missionBadge').textContent = '🏭 ' + eu + (ref ? ' — ' + ref : '');
+  calcSalaire();
   slide('s1_ag','s2_hr');
 }
 function go_hr(){
@@ -2754,7 +2749,15 @@ function prefillForms(d){
       let tot=0;
       if(d.horAmS&&d.horAmE){const dd=m(d.horAmE)-m(d.horAmS);if(dd>0)tot+=dd;}
       if(d.horPmS&&d.horPmE){const dd=m(d.horPmE)-m(d.horPmS);if(dd>0)tot+=dd;}
-      activeDays.forEach(i=>_applyToDay(i,d.horAmS,d.horAmE,d.horPmS,d.horPmE,tot));
+      activeDays.forEach(i=>{
+        _applyToDay(i,d.horAmS,d.horAmE,d.horPmS,d.horPmE,tot);
+        if(tot>0 && (d.panierMontant||d.panierMontantTax)){
+          eData[i].panier=true;
+          const inp=document.getElementById(`d${i}panier`); if(inp) inp.checked=true;
+          const lbl=document.getElementById(`cp-panier-${i}`); if(lbl) lbl.classList.add('on');
+          updateExtrasBadge(i);
+        }
+      });
       calcWeekTotal();
     }
   }
