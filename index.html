@@ -836,27 +836,27 @@ textarea::placeholder{color:#B8C4D4;}
               <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-1">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0;"></span>
                 <span style="font-size:12px;color:#475569;flex:1;">Zone I &nbsp;≤ 10 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-2">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0;"></span>
                 <span style="font-size:12px;color:#475569;flex:1;">Zone II &nbsp;11-20 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-3">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></span>
                 <span style="font-size:12px;color:#475569;flex:1;">Zone III &nbsp;21-30 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-4">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;"></span>
                 <span style="font-size:12px;color:#475569;flex:1;">Zone IV &nbsp;31-40 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-5">
                 <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;"></span>
                 <span style="font-size:12px;color:#475569;flex:1;">Zone V &nbsp;41-50 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm();debouncedSave()"><span class="we-unit">€/j</span></div>
+                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
               </div>
             </div>
 
@@ -896,7 +896,7 @@ textarea::placeholder{color:#B8C4D4;}
           <div style="margin-bottom:7px;">
             <div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Non soumis <span style="font-weight:400;color:#94A3B8;font-size:9px;">exonéré URSSAF</span></div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <div class="we-input-wrap" style="flex:1;"><input type="number" id="wk_panier_unit" min="0" step="0.01" placeholder="€/j" oninput="updatePanierCount();debouncedSave()"><span class="we-unit">€/j</span></div>
+              <div class="we-input-wrap" style="flex:1;"><input type="number" id="wk_panier_unit" min="0" step="0.01" placeholder="€/j" oninput="updatePanierCount()"><span class="we-unit">€/j</span></div>
               <span style="color:#CBD5E4;font-size:13px;">×</span>
               <span style="font-weight:700;color:#475569;font-size:13px;min-width:18px;text-align:center;" id="wk_pan_cnt_exo">0</span>
               <span style="color:#CBD5E4;font-size:13px;">=</span>
@@ -908,7 +908,7 @@ textarea::placeholder{color:#B8C4D4;}
           <div style="margin-bottom:10px;">
             <div style="font-size:10px;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Soumis <span style="font-weight:400;color:#94A3B8;font-size:9px;">au-delà du plafond — entre dans le brut</span></div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <div class="we-input-wrap" style="flex:1;"><input type="number" id="wk_panier_unit_tax" min="0" step="0.01" placeholder="€/j" oninput="updatePanierCount();debouncedSave()"><span class="we-unit">€/j</span></div>
+              <div class="we-input-wrap" style="flex:1;"><input type="number" id="wk_panier_unit_tax" min="0" step="0.01" placeholder="€/j" oninput="updatePanierCount()"><span class="we-unit">€/j</span></div>
               <span style="color:#CBD5E4;font-size:13px;">×</span>
               <span style="font-weight:700;color:#475569;font-size:13px;min-width:18px;text-align:center;" id="wk_pan_cnt_tax">0</span>
               <span style="color:#CBD5E4;font-size:13px;">=</span>
@@ -2377,7 +2377,6 @@ function bk(tId,fId){
    FORM VALIDATION & FLOWS
 ══════════════════════════════════════ */
 function req(id){ return document.getElementById(id).value.trim(); }
-function markInvalid(ids){ ids.forEach(id=>{ const el=document.getElementById(id); if(!el.value.trim()) el.classList.add('invalid'); else el.classList.remove('invalid'); }); }
 
 function go_s0() {
   const rq = ['i_nom', 'i_prenom', 'i_qualif', 'i_contrat'];
@@ -2922,7 +2921,7 @@ function buildDashboard(){
     ${contrat ? `<div style="font-size:11px;color:#64748b;margin-top:2px;">📋 ${contrat}</div>` : ''}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
       ${agResp ? `<span style="font-size:12px;color:#bfdbfe;">👤 ${agResp}</span>` : '<span></span>'}
-      ${agTel ? `<a href="tel:${agTel}" style="display:inline-flex;align-items:center;gap:5px;background:#22c55e;color:white;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;text-decoration:none;">📞 Appeler</a>` : ''}
+      ${agTel ? `<button onclick="makeCall('${agTel}')" style="display:inline-flex;align-items:center;gap:5px;background:#22c55e;color:white;border:none;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">📞 Appeler</button>` : ''}
     </div>
   </div>`;
 
