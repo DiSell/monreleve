@@ -1547,7 +1547,6 @@ function toHM(min){ return Math.floor(min/60)+':'+String(min%60).padStart(2,'0')
   // PDF.js worker — désactivé pour compatibilité iOS/Chrome
   if(typeof pdfjsLib !== 'undefined')
     pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-  seedDemo();
   buildWeek();
   initCanvas();
   document.getElementById('btn_s0').onclick = go_s0;
