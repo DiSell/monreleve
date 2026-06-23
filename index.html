@@ -2556,7 +2556,6 @@ function skipUpload(){
 }
 
 function continueFromExtract(){
-  try { prefillForms(_extracted); } catch(e){ console.error('prefillForms:', e); }
   slide('s_upload','s0');
 }
 
@@ -2574,6 +2573,7 @@ async function handlePDF(input, file){
   try {
     const text = await pdfToText(file);
     _extracted = parseContract(text);
+    prefillForms(_extracted);   // pre-remplit les champs ET sauvegarde le draft immediatement
     showExtractionResult(_extracted, text);
   } catch(e) {
     document.getElementById('upLoading').style.display='none';
