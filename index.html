@@ -743,7 +743,7 @@ textarea::placeholder{color:#B8C4D4;}
       <div class="we-grid">
         <div class="we-field">
           <label>Prime exceptionnelle</label>
-          <div class="we-input-wrap"><input type="number" id="wk_prime" min="0" step="0.01" placeholder="0" oninput="calcSalaire();debouncedSave()"><span class="we-unit">€</span></div>
+          <div class="we-input-wrap"><input type="number" id="wk_prime" min="0" step="0.01" placeholder="0" oninput="recalcAll()"><span class="we-unit">€</span></div>
         </div>
         <div class="we-field" style="grid-column:1/-1;border-top:1px dashed #E8EDF8;padding-top:12px;margin-top:4px;">
           <!-- Bouton toggle IKM -->
@@ -884,7 +884,7 @@ textarea::placeholder{color:#B8C4D4;}
         </div>
         <div class="we-field">
           <label>Ind. de trajet</label>
-          <div class="we-input-wrap"><input type="number" id="wk_trajet" min="0" step="0.01" placeholder="0" oninput="calcSalaire();debouncedSave()"><span class="we-unit">€</span></div>
+          <div class="we-input-wrap"><input type="number" id="wk_trajet" min="0" step="0.01" placeholder="0" oninput="recalcAll()"><span class="we-unit">€</span></div>
         </div>
         <div class="we-field" style="grid-column:1/-1;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1007,7 +1007,7 @@ textarea::placeholder{color:#B8C4D4;}
         <!-- Taux horaire — toujours visible dans le corps ouvert -->
         <div class="sal-taux-row">
           <span class="sal-taux-label">Taux horaire brut</span>
-          <div class="we-input-wrap" style="width:100px;"><input type="number" id="taux_horaire" min="0" step="0.01" placeholder="Ex: 12,50" oninput="calcSalaire();debouncedSave()"><span class="we-unit">€/h</span></div>
+          <div class="we-input-wrap" style="width:100px;"><input type="number" id="taux_horaire" min="0" step="0.01" placeholder="Ex: 12,50" oninput="recalcAll()"><span class="we-unit">€/h</span></div>
         </div>
         <div id="salNoHours" style="font-size:12px;color:#94A3B8;padding:6px 0 2px;">Saisissez vos heures pour voir l'estimation.</div>
 
@@ -1251,17 +1251,67 @@ const _FIELDS = ['i_nom','i_prenom','i_qualif','i_contrat','i_tel','i_email',
                  'taux_horaire','wk_panier_unit_tax'];
 let _draftTimer = null;
 
-function updateCallBtn(){
-  const tel = (document.getElementById('ag_tel')?.value||'').replace(/[\s.\-]/g,'');
-  const href = tel ? 'tel:'+tel : null;
-  // bouton dans le formulaire agence
-  const btn1 = document.getElementById('ag_tel_call');
-  if(btn1){ if(href){ btn1.href=href; btn1.style.display='flex'; } else btn1.style.display='none'; }
-  // bouton rapide dans la vue semaine
-  const btn2 = document.getElementById('quickCallBtn');
-  if(btn2){ if(href){ btn2.href=href; btn2.style.display='inline-block'; } else btn2.style.display='none'; }
+/* ── FONCTION CENTRALISÉE POUR APPELER ── */
+function makeCall(phoneNumber) {
+  const tel = (phoneNumber || '').replace(/[\s.\-]/g, '');
+  if (tel) {
+    window.location.href = 'tel:' + tel;
+  }
 }
 
+function updateCallBtn() {
+  const telInput = document.getElementById('ag_tel');
+  const tel = telInput ? telInput.value.replace(/[\s.\-]/g, '') : '';
+  const hasTel = !!tel;
+  
+  // Bouton dans le formulaire agence
+  const btn1 = document.getElementById('ag_tel_call');
+  if (btn1) {
+    if (hasTel) {
+      btn1.onclick = function(e) { e.preventDefault(); makeCall(tel); };
+      btn1.style.display = 'flex';
+    } else {
+      btn1.style.display = 'none';
+    }
+  }
+  
+  // Bouton rapide dans la vue semaine
+  const btn2 = document.getElementById('quickCallBtn');
+  if (btn2) {
+    if (hasTel) {
+      btn2.onclick = function(e) { e.preventDefault(); makeCall(tel); };
+      btn2.style.display = 'inline-block';
+    } else {
+      btn2.style.display = 'none';
+    }
+  }
+}
+
+/* ── FONCTION CENTRALISÉE POUR VALIDER UN FORMULAIRE ── */
+function validateForm(fieldIds, errorId, callback) {
+  fieldIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.value.trim()) el.classList.add('invalid');
+    else if (el) el.classList.remove('invalid');
+  });
+  
+  const hasError = fieldIds.some(id => {
+    const el = document.getElementById(id);
+    return el && !el.value.trim();
+  });
+  
+  const errEl = document.getElementById(errorId);
+  if (hasError) {
+    if (errEl) errEl.classList.add('on');
+    return false;
+  } else {
+    if (errEl) errEl.classList.remove('on');
+    if (callback) callback();
+    return true;
+  }
+}
+
+/* ── SAUVEGARDE BROUILLON ── */
 function saveDraft(){
   const form={};
   _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) form[id]=el.value; });
@@ -1793,7 +1843,14 @@ function buildWeek(){
     if(expandedDay===i){ card.classList.add('open'); document.getElementById(`dbody-${i}`).classList.add('open'); document.getElementById(`dchev-${i}`).style.transform='rotate(90deg)'; }
     updateSum(i);
   }
+  recalcAll();
+}
+
+/* ── FONCTION CENTRALISÉE POUR RECALCULER TOUT ── */
+function recalcAll() {
   calcWeekTotal();
+  calcSalaire();
+  debouncedSave();
 }
 
 function toggleDay(i){
@@ -1814,7 +1871,8 @@ function onT(i){
   if(pmS&&pmE){const d=m(pmE)-m(pmS);if(d>0)tot+=d;}
   dTots[i]=tot;
   document.getElementById(`dtot-${i}`).textContent=fmtMin(tot);
-  updateSum(i); calcWeekTotal(); calcIkm(); debouncedSave();
+  updateSum(i);
+  recalcAll();
 }
 
 function updateSum(i){
@@ -1855,7 +1913,6 @@ function calcWeekTotal(){
   } else {
     card.style.display='none';
   }
-  calcSalaire();
 }
 
 function setSupMode(mode){
@@ -1891,7 +1948,7 @@ function applyTemplate(mode){
   if(pmS&&pmE){const d=m(pmE)-m(pmS);if(d>0)tot+=d;}
   const indices=mode==='weekdays'?[0,1,2,3,4]:[0,1,2,3,4,5,6];
   indices.forEach(i=>{ _applyToDay(i,amS,amE,pmS,pmE,tot); });
-  calcWeekTotal();
+  recalcAll();
   flash(mode==='weekdays'?'✓ Appliqué Lun→Ven':'✓ Appliqué à toute la semaine');
 }
 
@@ -1927,6 +1984,7 @@ function onExtras(i){
   });
   updateExtrasBadge(i);
   updatePanierCount();
+  recalcAll();
 }
 
 function updateExtrasBadge(i){
@@ -2129,7 +2187,7 @@ function calcIkm(){
   const ikmTotal = parseFloat((ikmTotalEl?.textContent||'').replace(' €','').replace(',','.'))||0;
   const badge = document.getElementById('ikm-badge');
   if(badge){ badge.textContent=ikmTotal>0 ? ikmTotal.toFixed(2)+' €' : ''; badge.style.display=ikmTotal>0?'':'none'; }
-  calcSalaire();
+  recalcAll();
 }
 
 /* ══════════════════════════════════════
@@ -2243,7 +2301,7 @@ function updatePanierCount(){
   s('wk_pan_tot_tax', unitTax>0 ? totTax.toFixed(2)+' €' : '— €');
   s('wk_panier_total',  (unitExo>0||unitTax>0) ? totWeek.toFixed(2)+' €' : '— €');
   s('wk_panier_mensuel',(unitExo>0||unitTax>0) ? totMois.toFixed(2)+' €' : '— €');
-  calcSalaire();
+  recalcAll();
 }
 
 /* ── PHOTO JUSTIFICATIF ── */
@@ -2267,7 +2325,7 @@ function copyFromDay(i,e){ if(e) e.stopPropagation();
     const ki=document.getElementById(`d${j}km`); if(ki) ki.value=eData[j].km||'';
     updateExtrasBadge(j);
   }
-  calcWeekTotal(); updatePanierCount();
+  recalcAll(); updatePanierCount();
   flash('✓ Copié sur les '+(6-i)+' jour'+(6-i>1?'s':'')+' suivants');
 }
 
@@ -2281,7 +2339,7 @@ function clearDay(i,e){ if(e) e.stopPropagation();
   ['ferie','astreinte','panier'].forEach(f=>{ const cp=document.getElementById(`cp-${f}-${i}`); if(cp) cp.classList.remove('on'); const inp=document.getElementById(`d${i}${f}`); if(inp) inp.checked=false; });
   const ni=document.getElementById(`d${i}nuit`); if(ni) ni.value='';
   const ki=document.getElementById(`d${i}km`); if(ki) ki.value='';
-  updateExtrasBadge(i); calcWeekTotal(); updatePanierCount();
+  updateExtrasBadge(i); recalcAll(); updatePanierCount();
   flash('Jour effacé','#94A3B8');
 }
 
@@ -2321,23 +2379,27 @@ function bk(tId,fId){
 function req(id){ return document.getElementById(id).value.trim(); }
 function markInvalid(ids){ ids.forEach(id=>{ const el=document.getElementById(id); if(!el.value.trim()) el.classList.add('invalid'); else el.classList.remove('invalid'); }); }
 
-function go_s0(){
-  const rq=['i_nom','i_prenom','i_qualif','i_contrat']; markInvalid(rq);
-  if(rq.some(id=>!req(id))){ document.getElementById('e0').classList.add('on'); return; }
-  document.getElementById('e0').classList.remove('on');
-  showTabBar(false); slide('s0','s1_ag');
+function go_s0() {
+  const rq = ['i_nom', 'i_prenom', 'i_qualif', 'i_contrat'];
+  const ok = validateForm(rq, 'e0', () => {
+    showTabBar(false);
+    slide('s0', 's1_ag');
+  });
+  if (!ok) return;
 }
-function go_s1ag(){
-  const rq=['ag_nom','ag_adr']; markInvalid(rq);
-  if(rq.some(id=>!req(id))){ document.getElementById('e1ag').classList.add('on'); return; }
-  document.getElementById('e1ag').classList.remove('on');
-  // Badge mission dynamique
-  const eu = _extracted.euNom || req('ag_nom') || 'Mission';
-  const ref = _extracted.contrat || req('i_contrat') || '';
-  document.getElementById('missionBadge').textContent = '🏭 ' + eu + (ref ? ' — ' + ref : '');
-  calcSalaire();
-  slide('s1_ag','s2_hr');
+
+function go_s1ag() {
+  const rq = ['ag_nom', 'ag_adr'];
+  const ok = validateForm(rq, 'e1ag', () => {
+    const eu = _extracted.euNom || req('ag_nom') || 'Mission';
+    const ref = _extracted.contrat || req('i_contrat') || '';
+    document.getElementById('missionBadge').textContent = '🏭 ' + eu + (ref ? ' — ' + ref : '');
+    recalcAll();
+    slide('s1_ag', 's2_hr');
+  });
+  if (!ok) return;
 }
+
 function go_hr(){
   if(dTots.every(d=>d===0)){ document.getElementById('eHr').classList.add('on'); return; }
   document.getElementById('eHr').classList.remove('on');
@@ -2348,22 +2410,25 @@ function go_hr(){
   document.getElementById('clTot').textContent=fmtMin(tot);
   slide('s2_hr','s3_cl');
 }
-function go_cl(){
-  const rq=['cl_nom','cl_qualite']; markInvalid(rq);
-  if(rq.some(id=>!req(id))){ document.getElementById('eCl').classList.add('on'); return; }
-  document.getElementById('eCl').classList.remove('on');
-  const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS).length;
-  document.getElementById('rDate').textContent=document.getElementById('weekDates').textContent;
-  document.getElementById('rSub').textContent=filled+' jour(s) · '+req('i_prenom')+' '+req('i_nom');
-  document.getElementById('rTot').textContent=fmtMin(tot);
-  document.getElementById('sigName').textContent='Signature de : '+req('i_prenom')+' '+req('i_nom');
-  document.getElementById('fbD').textContent=document.getElementById('weekDates').textContent;
-  const fbM=_extracted.euNom||req('ag_nom')||'Mission';
-  const fbR=_extracted.contrat||req('i_contrat')||'—';
-  const fm=document.getElementById('fbMission'); if(fm) fm.textContent=fbM;
-  const fr=document.getElementById('fbRef'); if(fr) fr.textContent=fbR;
-  slide('s3_cl','s4_sig');
+
+function go_cl() {
+  const rq = ['cl_nom', 'cl_qualite'];
+  const ok = validateForm(rq, 'eCl', () => {
+    const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS).length;
+    document.getElementById('rDate').textContent=document.getElementById('weekDates').textContent;
+    document.getElementById('rSub').textContent=filled+' jour(s) · '+req('i_prenom')+' '+req('i_nom');
+    document.getElementById('rTot').textContent=fmtMin(tot);
+    document.getElementById('sigName').textContent='Signature de : '+req('i_prenom')+' '+req('i_nom');
+    document.getElementById('fbD').textContent=document.getElementById('weekDates').textContent;
+    const fbM=_extracted.euNom||req('ag_nom')||'Mission';
+    const fbR=_extracted.contrat||req('i_contrat')||'—';
+    const fm=document.getElementById('fbMission'); if(fm) fm.textContent=fbM;
+    const fr=document.getElementById('fbRef'); if(fr) fr.textContent=fbR;
+    slide('s3_cl','s4_sig');
+  });
+  if (!ok) return;
 }
+
 function go_sig(){
   if(!_sig){ document.getElementById('eSig').classList.add('on'); return; }
   document.getElementById('eSig').classList.remove('on'); slide('s4_sig','s5_fb');
@@ -2786,7 +2851,7 @@ function prefillForms(d){
           updateExtrasBadge(i);
         }
       });
-      calcWeekTotal();
+      recalcAll();
     }
   }
 
