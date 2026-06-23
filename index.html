@@ -2873,13 +2873,6 @@ function prefillForms(d){
   if(d.panierMontantTax) { const el=document.getElementById('wk_panier_unit_tax'); if(el){ el.value=d.panierMontantTax; updatePanierCount(); } }
   if(d.tauxHoraire) { const el=document.getElementById('taux_horaire'); if(el&&!el.value) el.value=d.tauxHoraire; }
 
-  // Adresse dépôt BTP — pré-rempli depuis l'adresse EU/agence du contrat
-  const depotEl = document.getElementById('ikm-depot-adr');
-  if(depotEl && !depotEl.value){
-    const adrParts = [d.agAdr, d.agCp, d.agVille].filter(Boolean);
-    if(adrParts.length) depotEl.value = adrParts.join(', ');
-  }
-
   // Horaires (template + appliquer aux jours contractuels)
   if(d.horAmS && d.horPmS){
     set('tpl-am-s', d.horAmS);
