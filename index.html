@@ -385,7 +385,7 @@ textarea::placeholder{color:#B8C4D4;}
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .content.with-tabs {
-    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 16px);
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 24px);
   }
 }
 </style>
@@ -593,7 +593,7 @@ textarea::placeholder{color:#B8C4D4;}
       </div>
 
       <button class="btn btn-blue mt" onclick="continueFromExtract()">Vérifier et continuer →</button>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;padding-bottom:16px;">
         <button class="btn btn-ghost" onclick="skipUpload()">✏️ Saisir manuellement</button>
         <button class="btn btn-ghost" onclick="resetUpload()">📄 Changer de fichier</button>
 
@@ -1823,6 +1823,7 @@ function onT(i){
 function updateSum(i){
   const{amS,amE,pmS,pmE}=tData[i];
   const sumEl=document.getElementById(`dsum-${i}`), dotEl=document.getElementById(`ddot-${i}`);
+  if(!sumEl||!dotEl) return;
   if(!amS&&!amE&&!pmS&&!pmE){ sumEl.textContent='Aucune heure'; sumEl.className='day-sum'; dotEl.className='day-dot'; return; }
   const parts=[]; if(amS&&amE)parts.push(amS+'–'+amE); if(pmS&&pmE)parts.push(pmS+'–'+pmE);
   sumEl.textContent=(parts.length?parts.join(' / '):' ')+(dTots[i]?' · '+fmtMin(dTots[i]):'');
@@ -1832,8 +1833,8 @@ function updateSum(i){
 
 function calcWeekTotal(){
   const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS||d.amE||d.pmE).length;
-  document.getElementById('weekTotNum').textContent=fmtMin(tot);
-  document.getElementById('weekTotSub').textContent=filled+' jour'+(filled>1?'s':'')+' renseigné'+(filled>1?'s':'');
+  const _wtn=document.getElementById('weekTotNum'); if(_wtn) _wtn.textContent=fmtMin(tot);
+  const _wts=document.getElementById('weekTotSub'); if(_wts) _wts.textContent=filled+' jour'+(filled>1?'s':'')+' renseigné'+(filled>1?'s':'');
 
   // Heures supplémentaires — Code du travail art. L3121-22 / L3121-33
   const BASE=35*60, LIM25=43*60;
@@ -2485,7 +2486,7 @@ function skipUpload(){
 }
 
 function continueFromExtract(){
-  prefillForms(_extracted);
+  try { prefillForms(_extracted); } catch(e){ console.error('prefillForms:', e); }
   slide('s_upload','s0');
 }
 
