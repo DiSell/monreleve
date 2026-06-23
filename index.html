@@ -2547,18 +2547,24 @@ function parseContract(txt){
   const siretM = txt.match(/Siret\s*:?\s*(\d{9,14})/i);
   if(siretM) d.agSiret=siretM[1];
 
-  // Adresse agence — format inline: "111 AVENUE D'AUVERGNE 43100 BRIOUDE Tel"
-  const _voies = 'avenue|rue|boulevard|bd\\.?|all[eé]e|place|chemin|impasse|route|voie|za\\b|zi\\b|zone|cit[eé]|r[eé]sidence|passage';
-  const adrInM = txt.match(new RegExp('(\\d+\\s+(?:'+_voies+')[^\\d\\n]{1,55}?)\\s*(\\d{5})\\s+([A-Z\\u00C0-\\u00FF][A-Z\\s\\u00C0-\\u00FF-]{2,30}?)\\s*(?:Tel|T[eé]l|\\s{3}|\\n|$)','i'));
+  // Adresse agence — formats inline et multi-lignes
+  const _voies = 'av(?:enue)?\\.?|rue|bd\\.?|boulevard|all[eé]e?|place|chemin|impasse|imp\\.?|route|rte\\.?|voie|za\\b|zi\\b|zone|cit[eé]|r[eé]sidence|passage|sq\\.?|square|cours|lotissement';
+  const _adrEnd = '(?:(?:T[eé]l|Siret|SIRET|Mail|www|BP|CS|C[eé]dex|\\d{9,})|\\s{2,}|\\n|$)';
+  const adrInM = txt.match(new RegExp('(\\d{1,4}[,\\s]+(?:'+_voies+')[^\\d\\n]{1,60}?)\\s*(\\d{5})\\s+([A-Z\\u00C0-\\u00FF][A-Z\\s\\u00C0-\\u00FF-]{2,30}?)\\s*'+_adrEnd,'i'));
   if(adrInM){ d.agAdr=adrInM[1].trim(); d.agCp=adrInM[2]; d.agVille=adrInM[3].trim(); }
   else {
-    // Fallback multi-ligne: adresse \n CP VILLE \n Tel
-    const adrMultiM = txt.match(new RegExp('(\\d+\\s+(?:'+_voies+')[^\\n]{2,60})\\s*\\n\\s*(\\d{5})\\s+([A-Z\\u00C0-\\u00FF][A-Z\\s-]{2,30}?)(?:\\n|Tel|T[eé]l|$)','im'));
+    // Fallback multi-ligne
+    const adrMultiM = txt.match(new RegExp('(\\d{1,4}[,\\s]+(?:'+_voies+')[^\\n]{2,60})\\s*\\n\\s*(\\d{5})\\s+([A-Z\\u00C0-\\u00FF][A-Z\\s-]{2,30}?)(?:\\n|'+_adrEnd+')','im'));
     if(adrMultiM){ d.agAdr=adrMultiM[1].trim(); d.agCp=adrMultiM[2]; d.agVille=adrMultiM[3].trim(); }
     else {
-      const cpM = txt.match(/(\d{5})\s+([A-ZÉÈÊÀÂÎÔÙÛÇ][A-Z\s-]{2,30})(?:\n|Tel|Tél|\s{3})/i);
+      const cpM = txt.match(/(\d{5})\s+([A-ZÉÈÊÀÂÎÔÙÛÇ][A-Z\s-]{2,30})(?:\n|Tel|Tél|\s{2,}|\d{9,})/i);
       if(cpM){ d.agCp=cpM[1]; d.agVille=cpM[2].trim(); }
     }
+  }
+  // Fallback ancré sur le CP : cherche "N° texte [CP]" si l'adresse reste vide
+  if(!d.agAdr && d.agCp){
+    const anchorM = txt.match(new RegExp('(\\d{1,4}[^\\n\\d]{4,60}?)\\s+'+d.agCp+'\\b','i'));
+    if(anchorM) d.agAdr = anchorM[1].trim();
   }
 
   // Intérimaire — "M NOM PRENOM" ou "MME/MLLE PRENOM NOM"
