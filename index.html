@@ -889,7 +889,10 @@ textarea::placeholder{color:#B8C4D4;}
         <div class="we-field" style="grid-column:1/-1;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <label style="margin:0;">🍱 Panier repas</label>
-            <div style="font-size:11px;color:#1D4ED8;font-weight:700;background:#EBF2FF;border-radius:6px;padding:2px 8px;" id="wk_panier_count">0 j. / semaine</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button onclick="applyPanierToWorkedDays()" style="border:none;background:#EBF2FF;color:#1D4ED8;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;">↩ Jours travaillés</button>
+              <div style="font-size:11px;color:#1D4ED8;font-weight:700;background:#EBF2FF;border-radius:6px;padding:2px 8px;" id="wk_panier_count">0 j. / semaine</div>
+            </div>
           </div>
 
           <!-- Non soumis à cotisations -->
@@ -2271,6 +2274,17 @@ function calcSalaire(){
 
   set('salNet', eur(netBrut));
   set('salNetPreview', '~'+eur(netBrut));
+}
+
+function applyPanierToWorkedDays(){
+  dTots.forEach((tot, i) => {
+    eData[i].panier = tot > 0;
+    const inp = document.getElementById(`d${i}panier`); if(inp) inp.checked = eData[i].panier;
+    const lbl = document.getElementById(`cp-panier-${i}`); if(lbl) lbl.classList.toggle('on', eData[i].panier);
+    updateExtrasBadge(i);
+  });
+  updatePanierCount();
+  flash('✓ Panier appliqué aux jours travaillés');
 }
 
 function updatePanierCount(){
