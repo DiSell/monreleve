@@ -1288,27 +1288,19 @@ function updateCallBtn() {
 }
 
 /* ── FONCTION CENTRALISÉE POUR VALIDER UN FORMULAIRE ── */
-function validateForm(fieldIds, errorId, callback) {
+function validateForm(fieldIds, errorId) {
   fieldIds.forEach(id => {
     const el = document.getElementById(id);
     if (el && !el.value.trim()) el.classList.add('invalid');
     else if (el) el.classList.remove('invalid');
   });
-  
   const hasError = fieldIds.some(id => {
     const el = document.getElementById(id);
     return el && !el.value.trim();
   });
-  
   const errEl = document.getElementById(errorId);
-  if (hasError) {
-    if (errEl) errEl.classList.add('on');
-    return false;
-  } else {
-    if (errEl) errEl.classList.remove('on');
-    if (callback) callback();
-    return true;
-  }
+  if (errEl) errEl.classList.toggle('on', hasError);
+  return !hasError;
 }
 
 /* ── SAUVEGARDE BROUILLON ── */
@@ -2379,24 +2371,18 @@ function bk(tId,fId){
 function req(id){ return document.getElementById(id).value.trim(); }
 
 function go_s0() {
-  const rq = ['i_nom', 'i_prenom', 'i_qualif', 'i_contrat'];
-  const ok = validateForm(rq, 'e0', () => {
-    showTabBar(false);
-    slide('s0', 's1_ag');
-  });
-  if (!ok) return;
+  if (!validateForm(['i_nom', 'i_prenom', 'i_qualif', 'i_contrat'], 'e0')) return;
+  showTabBar(false);
+  slide('s0', 's1_ag');
 }
 
 function go_s1ag() {
-  const rq = ['ag_nom', 'ag_adr'];
-  const ok = validateForm(rq, 'e1ag', () => {
-    const eu = _extracted.euNom || req('ag_nom') || 'Mission';
-    const ref = _extracted.contrat || req('i_contrat') || '';
-    document.getElementById('missionBadge').textContent = '🏭 ' + eu + (ref ? ' — ' + ref : '');
-    recalcAll();
-    slide('s1_ag', 's2_hr');
-  });
-  if (!ok) return;
+  if (!validateForm(['ag_nom', 'ag_adr'], 'e1ag')) return;
+  const eu = _extracted.euNom || req('ag_nom') || 'Mission';
+  const ref = _extracted.contrat || req('i_contrat') || '';
+  document.getElementById('missionBadge').textContent = '🏭 ' + eu + (ref ? ' — ' + ref : '');
+  recalcAll();
+  slide('s1_ag', 's2_hr');
 }
 
 function go_hr(){
@@ -2411,21 +2397,18 @@ function go_hr(){
 }
 
 function go_cl() {
-  const rq = ['cl_nom', 'cl_qualite'];
-  const ok = validateForm(rq, 'eCl', () => {
-    const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS).length;
-    document.getElementById('rDate').textContent=document.getElementById('weekDates').textContent;
-    document.getElementById('rSub').textContent=filled+' jour(s) · '+req('i_prenom')+' '+req('i_nom');
-    document.getElementById('rTot').textContent=fmtMin(tot);
-    document.getElementById('sigName').textContent='Signature de : '+req('i_prenom')+' '+req('i_nom');
-    document.getElementById('fbD').textContent=document.getElementById('weekDates').textContent;
-    const fbM=_extracted.euNom||req('ag_nom')||'Mission';
-    const fbR=_extracted.contrat||req('i_contrat')||'—';
-    const fm=document.getElementById('fbMission'); if(fm) fm.textContent=fbM;
-    const fr=document.getElementById('fbRef'); if(fr) fr.textContent=fbR;
-    slide('s3_cl','s4_sig');
-  });
-  if (!ok) return;
+  if (!validateForm(['cl_nom', 'cl_qualite'], 'eCl')) return;
+  const tot=dTots.reduce((a,b)=>a+b,0), filled=tData.filter(d=>d.amS||d.pmS).length;
+  document.getElementById('rDate').textContent=document.getElementById('weekDates').textContent;
+  document.getElementById('rSub').textContent=filled+' jour(s) · '+req('i_prenom')+' '+req('i_nom');
+  document.getElementById('rTot').textContent=fmtMin(tot);
+  document.getElementById('sigName').textContent='Signature de : '+req('i_prenom')+' '+req('i_nom');
+  document.getElementById('fbD').textContent=document.getElementById('weekDates').textContent;
+  const fbM=_extracted.euNom||req('ag_nom')||'Mission';
+  const fbR=_extracted.contrat||req('i_contrat')||'—';
+  const fm=document.getElementById('fbMission'); if(fm) fm.textContent=fbM;
+  const fr=document.getElementById('fbRef'); if(fr) fr.textContent=fbR;
+  slide('s3_cl','s4_sig');
 }
 
 function go_sig(){
