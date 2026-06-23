@@ -1075,7 +1075,10 @@ textarea::placeholder{color:#B8C4D4;}
     </div>
 
     <div id="eHr" class="err" style="margin-bottom:10px;">⚠ Renseignez au moins un jour de travail.</div>
-    <button class="btn btn-blue" onclick="go_hr()">Valider les heures →</button>
+    <div class="brow" style="margin-bottom:10px;">
+      <button class="btn btn-ghost" onclick="archiveWeek()" style="font-size:13px;">📥 Archiver</button>
+      <button class="btn btn-blue" onclick="go_hr()">Valider les heures →</button>
+    </div>
   </div>
 </div>
 
@@ -1659,7 +1662,7 @@ function buildMonthView(){
         </div>
         <div class="wk-right">
           <div class="wk-total">${fmtMin(w.totalMin)}</div>
-          <div class="wk-valid">✓ Validé · ⭐${'★'.repeat(w.rating)}</div>
+          <div class="wk-valid">${w.status==='archived'?'📥 Archivé':'✓ Validé · ⭐'+'★'.repeat(w.rating||0)}</div>
         </div>
         <div class="wk-chev" id="wkchev-${wi}">›</div>
       </div>
@@ -2412,6 +2415,31 @@ function submit(){
   slide('s5_fb','s6_ok');
 }
 
+function archiveWeek(){
+  const tot=dTots.reduce((a,b)=>a+b,0);
+  if(tot===0 && !Object.values({nom:req('i_nom'),ag:req('ag_nom')}).some(v=>v)){
+    flash('⚠ Rien à archiver — saisissez d\'abord des heures ou des infos','#F59E0B'); return;
+  }
+  const mon=getMonday(weekOffset);
+  const monthKey=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0');
+  const wId=mon.getFullYear()+'-W'+isoWeek(mon)+'-arch';
+  const wDates=document.getElementById('weekDates').textContent;
+  const wNum=document.getElementById('weekNum').textContent;
+  const filled=tData.filter(d=>d.amS||d.pmS||d.amE||d.pmE).length;
+  const iInfo={nom:req('i_nom'),prenom:req('i_prenom'),qualif:req('i_qualif'),contrat:req('i_contrat'),tel:req('i_tel'),email:req('i_email'),agNom:req('ag_nom'),agSiret:req('ag_siret'),agAdr:req('ag_adr'),agCp:req('ag_cp'),agVille:req('ag_ville'),agTel:req('ag_tel'),agResp:req('ag_resp')};
+  const dayRecs=DAY_NAMES.map((dn,i)=>({name:dn,...tData[i],tot:dTots[i]}));
+  const prime=parseFloat(document.getElementById('wk_prime')?.value)||0;
+  const trajet=parseFloat(document.getElementById('wk_trajet')?.value)||0;
+  const paniers=eData.filter(e=>e.panier).length;
+  const panierUnit=parseFloat(document.getElementById('wk_panier_unit')?.value)||0;
+  const panierUnitTax=parseFloat(document.getElementById('wk_panier_unit_tax')?.value)||0;
+  const tauxHoraire=parseFloat(document.getElementById('taux_horaire')?.value)||0;
+  const weekRec={ id:wId, weekLabel:wNum, weekDates:wDates, month:monthKey, days:dayRecs, totalMin:tot, filled, interimaire:req('i_prenom')+' '+req('i_nom'), iInfo, validatedBy:'', rating:0, status:'archived', extras:{prime,trajet,paniers,panierUnit,panierUnitTax,tauxHoraire,days:eData.map(e=>({...e}))} };
+  addWeek(weekRec);
+  saveDraft();
+  flash('📥 Semaine archivée !','#059669');
+}
+
 function resetWeekExtras(){
   ['wk_prime','wk_trajet','wk_comment','wk_panier_unit','wk_panier_unit_tax','wk_km_total'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const cEl=document.getElementById('wk_panier_count'); if(cEl) cEl.textContent='0 j.';
@@ -2763,6 +2791,7 @@ function prefillForms(d){
   }
 
   updateCallBtn();
+  saveDraft();
 }
 
 /* ══════════════════════════════════════
