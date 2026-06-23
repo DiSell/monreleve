@@ -93,6 +93,8 @@ body{
 
 /* ── WEEKLY TIMESHEET ── */
 .week-nav{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,23,42,.06);}
+#weekDetail{overflow:hidden;transition:max-height .3s ease,opacity .3s ease;max-height:9999px;opacity:1;}
+#weekDetail.folded{max-height:0;opacity:0;pointer-events:none;}
 .wbtn{width:34px;height:34px;background:#F1F5FB;border:none;border-radius:9px;font-size:18px;color:#475569;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;}
 .wbtn:active{background:#DDE6F5;}
 .week-label-wrap{text-align:center;flex:1;}
@@ -729,12 +731,14 @@ textarea::placeholder{color:#B8C4D4;}
 
     <div class="week-nav">
       <button class="wbtn" onclick="changeWeek(-1)">‹</button>
-      <div class="week-label-wrap">
+      <div class="week-label-wrap" onclick="toggleWeekFold()" style="cursor:pointer;user-select:none;">
         <div class="week-num" id="weekNum">Semaine —</div>
         <div class="week-dates" id="weekDates">— au —</div>
       </div>
+      <button class="wbtn" id="weekFoldBtn" onclick="toggleWeekFold()" title="Plier / Déplier">▼</button>
       <button class="wbtn" onclick="changeWeek(1)">›</button>
     </div>
+    <div id="weekDetail">
     <div id="daysList"></div>
 
     <!-- Compléments semaine -->
@@ -751,7 +755,7 @@ textarea::placeholder{color:#B8C4D4;}
             <span>🚗 Indemnité de déplacement</span>
             <span id="ikm-badge" style="font-size:11px;font-weight:700;color:#2563EB;background:#EBF2FF;border-radius:6px;padding:2px 8px;display:none;"></span>
           </button>
-          <div id="ikm-body" style="display:none;margin-top:10px;">
+          <div id="ikm-body" style="margin-top:10px;">
           <!-- Toggle barème -->
           <div style="display:flex;gap:6px;margin-bottom:10px;">
             <button id="ikm-btn-f" onclick="setIkmMode('fiscal')" style="flex:1;border:2px solid #2563EB;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:#2563EB;color:#fff;cursor:pointer;font-family:inherit;">📏 Fiscal URSSAF</button>
@@ -796,7 +800,6 @@ textarea::placeholder{color:#B8C4D4;}
             </div>
             <div id="ikm-geo-status" style="font-size:10px;color:#94A3B8;margin-bottom:6px;display:none;"></div>
 
-            <!-- Séparateur -->
             <div style="display:flex;align-items:center;gap:6px;margin:4px 0 8px;">
               <div style="flex:1;height:1px;background:#EDF1F8;"></div>
               <span style="font-size:16px;color:#CBD5E4;">↕</span>
@@ -809,76 +812,90 @@ textarea::placeholder{color:#B8C4D4;}
               <input type="text" id="ikm-chantier-adr" placeholder="Ex: ZI du Brézet, 63100 Clermont-Ferrand" oninput="debouncedSave()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
               <button onclick="geocodeChantier()" id="ikm-chantier-btn" title="Localiser le chantier" style="background:#EF4444;color:#fff;border:none;border-radius:10px;padding:9px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">📍</button>
             </div>
-            <div id="ikm-chantier-status" style="font-size:10px;color:#94A3B8;margin-bottom:8px;display:none;"></div>
+            <div id="ikm-chantier-status" style="font-size:10px;color:#94A3B8;margin-bottom:4px;display:none;"></div>
 
-            <!-- Carte Leaflet -->
-            <div id="ikm-map-wrap" style="display:none;border-radius:12px;overflow:hidden;margin-bottom:10px;border:2px solid #E8EDF8;">
-              <div id="ikm-map" style="height:200px;width:100%;"></div>
-              <div style="background:#F8FAFC;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#2563EB;display:inline-block;border-radius:2px;"></span>Dépôt</span>
-                <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#EF4444;display:inline-block;border-radius:2px;border-style:dashed;"></span>Chantier</span>
-                <span id="ikm-dist-badge" style="display:none;margin-left:auto;font-size:11px;font-weight:700;color:#2563EB;background:#EBF2FF;border-radius:6px;padding:2px 8px;"></span>
+            <!-- ── Accordéon : Carte ── -->
+            <button class="extras-toggle" id="ikm-map-tog" onclick="toggleIkmMap()" style="width:100%;justify-content:space-between;">
+              <span>🗺️ Carte</span>
+              <span id="ikm-map-chev" style="font-size:12px;transition:transform .2s;">›</span>
+            </button>
+            <div id="ikm-map-acc" style="display:none;overflow:hidden;">
+              <div id="ikm-map-wrap" style="border-radius:12px;overflow:hidden;margin:6px 0 4px;border:2px solid #E8EDF8;">
+                <div id="ikm-map-ph" style="height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:#F4F8FB;color:#94A3B8;font-size:12px;text-align:center;padding:16px;">
+                  <span style="font-size:30px;">🗺️</span>
+                  <span>Géocodez le dépôt puis le chantier<br>avec les boutons <strong>📍</strong> pour voir la carte</span>
+                </div>
+                <div id="ikm-map" style="height:200px;width:100%;display:none;"></div>
+                <div style="background:#F8FAFC;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#2563EB;display:inline-block;border-radius:2px;"></span>Dépôt</span>
+                  <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#EF4444;display:inline-block;border-radius:2px;border-style:dashed;"></span>Chantier</span>
+                  <span id="ikm-dist-badge" style="display:none;margin-left:auto;font-size:11px;font-weight:700;color:#2563EB;background:#EBF2FF;border-radius:6px;padding:2px 8px;"></span>
+                </div>
               </div>
             </div>
 
-            <!-- Zone auto-détectée -->
-            <div id="ikm-zone-detected" style="display:none;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:none;align-items:center;gap:8px;">
-              <span style="font-size:20px;">✅</span>
-              <div style="flex:1;">
-                <div style="font-size:10px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.05em;">Zone détectée automatiquement</div>
-                <div style="font-size:13px;font-weight:700;color:#0F172A;margin-top:2px;"><span id="ikm-zone-label">—</span> <span style="font-weight:400;color:#64748B;font-size:11px;">· <span id="ikm-dist-label">—</span> à vol d'oiseau</span></div>
+            <!-- ── Accordéon : Zones & Taux ── -->
+            <button class="extras-toggle" id="ikm-zones-tog" onclick="toggleIkmZones()" style="width:100%;justify-content:space-between;">
+              <span>📐 Zones &amp; Taux</span>
+              <span id="ikm-zones-chev" style="font-size:12px;transition:transform .2s;">›</span>
+            </button>
+            <div id="ikm-zones-acc" style="display:none;">
+              <!-- Zone auto-détectée -->
+              <div id="ikm-zone-detected" style="display:none;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:10px;padding:10px 12px;margin:6px 0 10px;align-items:center;gap:8px;">
+                <span style="font-size:20px;">✅</span>
+                <div style="flex:1;">
+                  <div style="font-size:10px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.05em;">Zone détectée automatiquement</div>
+                  <div style="font-size:13px;font-weight:700;color:#0F172A;margin-top:2px;"><span id="ikm-zone-label">—</span> <span style="font-weight:400;color:#64748B;font-size:11px;">· <span id="ikm-dist-label">—</span> à vol d'oiseau</span></div>
+                </div>
               </div>
+              <!-- Taux par zone -->
+              <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Taux journalier (accord régional)</div>
+              <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;" id="ikm-zones-list">
+                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-1">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0;"></span>
+                  <span style="font-size:12px;color:#475569;flex:1;">Zone I &nbsp;≤ 10 km</span>
+                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-2">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0;"></span>
+                  <span style="font-size:12px;color:#475569;flex:1;">Zone II &nbsp;11-20 km</span>
+                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-3">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></span>
+                  <span style="font-size:12px;color:#475569;flex:1;">Zone III &nbsp;21-30 km</span>
+                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-4">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;"></span>
+                  <span style="font-size:12px;color:#475569;flex:1;">Zone IV &nbsp;31-40 km</span>
+                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-5">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;"></span>
+                  <span style="font-size:12px;color:#475569;flex:1;">Zone V &nbsp;41-50 km</span>
+                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+                </div>
+              </div>
+              <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Ma zone <span style="font-weight:400;text-transform:none;">(corrigeable)</span></div>
+              <select id="ikm-zone-sel" onchange="highlightZoneRow();calcIkm()" style="width:100%;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:9px 8px;font-size:12px;font-weight:700;font-family:inherit;color:#0F172A;-webkit-appearance:none;margin-bottom:4px;">
+                <option value="1">Zone I — ≤ 10 km</option>
+                <option value="2">Zone II — 11 à 20 km</option>
+                <option value="3">Zone III — 21 à 30 km</option>
+                <option value="4">Zone IV — 31 à 40 km</option>
+                <option value="5">Zone V — 41 à 50 km</option>
+              </select>
             </div>
 
-            <!-- Taux par zone -->
-            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Taux journalier par zone (accord régional)</div>
-            <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;" id="ikm-zones-list">
-              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-1">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0;"></span>
-                <span style="font-size:12px;color:#475569;flex:1;">Zone I &nbsp;≤ 10 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-2">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0;"></span>
-                <span style="font-size:12px;color:#475569;flex:1;">Zone II &nbsp;11-20 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-3">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></span>
-                <span style="font-size:12px;color:#475569;flex:1;">Zone III &nbsp;21-30 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-4">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;"></span>
-                <span style="font-size:12px;color:#475569;flex:1;">Zone IV &nbsp;31-40 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-5">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;"></span>
-                <span style="font-size:12px;color:#475569;flex:1;">Zone V &nbsp;41-50 km</span>
-                <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-              </div>
-            </div>
-
-            <!-- Sélecteur de zone (modifiable si l'auto-détection est fausse) -->
-            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Ma zone <span style="font-weight:400;text-transform:none;font-size:10px;">(corrigeable)</span></div>
-            <select id="ikm-zone-sel" onchange="highlightZoneRow();calcIkm()" style="width:100%;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:9px 8px;font-size:12px;font-weight:700;font-family:inherit;color:#0F172A;-webkit-appearance:none;margin-bottom:8px;">
-              <option value="1">Zone I — ≤ 10 km</option>
-              <option value="2">Zone II — 11 à 20 km</option>
-              <option value="3">Zone III — 21 à 30 km</option>
-              <option value="4">Zone IV — 31 à 40 km</option>
-              <option value="5">Zone V — 41 à 50 km</option>
-            </select>
-
-            <!-- Résultat -->
-            <div style="display:flex;align-items:center;gap:5px;background:#F8FAFC;border-radius:10px;padding:10px 12px;font-size:13px;">
+            <!-- Résultat — toujours visible -->
+            <div style="display:flex;align-items:center;gap:5px;background:#F8FAFC;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:8px;">
               <span style="color:#64748B;font-size:12px;" id="ikm-taux-btp">— €/j</span>
               <span style="color:#CBD5E4;">×</span>
               <span style="font-weight:700;color:#0F172A;" id="ikm-jours-btp">0 j.</span>
               <span style="color:#CBD5E4;">=</span>
               <strong style="color:#059669;font-size:16px;margin-left:auto;" id="ikm-ttl-b">— €</strong>
             </div>
-            <div style="font-size:10px;color:#94A3B8;margin-top:6px;">Taux selon l'accord CCN BTP de votre région</div>
+            <div style="font-size:10px;color:#94A3B8;margin-top:5px;">Taux selon l'accord CCN BTP de votre région</div>
           </div>
           </div><!-- /ikm-body -->
         </div>
@@ -1082,6 +1099,7 @@ textarea::placeholder{color:#B8C4D4;}
       <button class="btn btn-ghost" onclick="archiveWeek()" style="font-size:13px;">📥 Archiver</button>
       <button class="btn btn-blue" onclick="go_hr()">Valider les heures →</button>
     </div>
+    </div><!-- /#weekDetail -->
   </div>
 </div>
 
@@ -1312,9 +1330,8 @@ function saveDraft(){
   const form={};
   _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) form[id]=el.value; });
   const ikmZoneSel = document.getElementById('ikm-zone-sel')?.value||'1';
-  const ikmOpen = document.getElementById('ikm-body')?.style.display!=='none';
   const draft={ ts:Date.now(), weekOffset, tData:JSON.parse(JSON.stringify(tData)),
-    dTots:[...dTots], eData:JSON.parse(JSON.stringify(eData)), _supMode, _ikmMode, ikmZoneSel, ikmOpen, form };
+    dTots:[...dTots], eData:JSON.parse(JSON.stringify(eData)), _supMode, _ikmMode, ikmZoneSel, form };
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
 }
 
@@ -1334,8 +1351,7 @@ function _applyDraft(d){
   _ikmMode=d._ikmMode||'fiscal';
   _FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el&&d.form&&d.form[id]!=null) el.value=d.form[id]; });
   const zSel=document.getElementById('ikm-zone-sel'); if(zSel&&d.ikmZoneSel) zSel.value=d.ikmZoneSel;
-  const ikmBody=document.getElementById('ikm-body'); if(ikmBody) ikmBody.style.display=d.ikmOpen?'':'none';
-  const ikmTog=document.getElementById('ikm-tog'); if(ikmTog) ikmTog.classList.toggle('has-data',!!d.ikmOpen);
+  // ikm-body toujours ouvert par défaut (on ne restaure plus l'état fermé)
   setIkmMode(_ikmMode);
   buildWeek(); updatePanierCount(); calcIkm(); updateCallBtn();
 }
@@ -1847,10 +1863,36 @@ function buildWeek(){
 }
 
 /* ── FONCTION CENTRALISÉE POUR RECALCULER TOUT ── */
+function _syncPanierDisplay(){
+  const count   = eData.filter(e=>e.panier).length;
+  const unitExo = parseFloat(document.getElementById('wk_panier_unit')?.value)||0;
+  const unitTax = parseFloat(document.getElementById('wk_panier_unit_tax')?.value)||0;
+  const totExo  = count * unitExo;
+  const totTax  = count * unitTax;
+  const totWeek = totExo + totTax;
+  const totMois = totWeek * (52/12);
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('wk_panier_count', count+' j. / semaine');
+  s('wk_pan_cnt_exo', count+'j');
+  s('wk_pan_cnt_tax', count+'j');
+  s('wk_pan_tot_exo', unitExo>0 ? totExo.toFixed(2)+' €' : '— €');
+  s('wk_pan_tot_tax', unitTax>0 ? totTax.toFixed(2)+' €' : '— €');
+  s('wk_panier_total',  (unitExo>0||unitTax>0) ? totWeek.toFixed(2)+' €' : '— €');
+  s('wk_panier_mensuel',(unitExo>0||unitTax>0) ? totMois.toFixed(2)+' €' : '— €');
+}
+
 function recalcAll() {
   calcWeekTotal();
+  _syncPanierDisplay();
   calcSalaire();
   debouncedSave();
+}
+
+function toggleWeekFold(){
+  const detail = document.getElementById('weekDetail');
+  const btn    = document.getElementById('weekFoldBtn');
+  const folded = detail.classList.toggle('folded');
+  if(btn) btn.textContent = folded ? '▲' : '▼';
 }
 
 function toggleDay(i){
@@ -2012,6 +2054,27 @@ function toggleIkm(){
   debouncedSave();
 }
 
+function toggleIkmMap(){
+  const acc=document.getElementById('ikm-map-acc'), chev=document.getElementById('ikm-map-chev');
+  const open=acc.style.display!=='none';
+  acc.style.display=open?'none':'';
+  if(chev) chev.style.transform=open?'':'rotate(90deg)';
+  if(!open && _ikmMap) setTimeout(()=>_ikmMap.invalidateSize(),150);
+}
+
+function toggleIkmZones(){
+  const acc=document.getElementById('ikm-zones-acc'), chev=document.getElementById('ikm-zones-chev');
+  const open=acc.style.display!=='none';
+  acc.style.display=open?'none':'';
+  if(chev) chev.style.transform=open?'':'rotate(90deg)';
+}
+
+function _openAcc(accId, chevId){
+  const acc=document.getElementById(accId), chev=document.getElementById(chevId);
+  if(acc){ acc.style.display=''; }
+  if(chev){ chev.style.transform='rotate(90deg)'; }
+}
+
 function setIkmMode(mode){
   _ikmMode = mode;
   document.getElementById('ikm-fiscal').style.display = mode==='fiscal' ? '' : 'none';
@@ -2020,6 +2083,10 @@ function setIkmMode(mode){
   const inactive='border:2px solid #E8EDF8;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:transparent;color:#94A3B8;cursor:pointer;font-family:inherit;';
   document.getElementById('ikm-btn-f').style.cssText = mode==='fiscal' ? active : inactive;
   document.getElementById('ikm-btn-b').style.cssText = mode==='btp'    ? active : inactive;
+  if(mode==='btp'){
+    _openAcc('ikm-map-acc','ikm-map-chev');
+    _openAcc('ikm-zones-acc','ikm-zones-chev');
+  }
   calcIkm();
 }
 
@@ -2092,9 +2159,12 @@ async function geocodeChantier(){
 
 function showIkmMap(){
   if(!_ikmDepotCoords) return;
-  const wrap=document.getElementById('ikm-map-wrap');
-  if(!wrap) return;
-  wrap.style.display='';
+  // Ouvrir l'accordéon carte si fermé
+  const acc=document.getElementById('ikm-map-acc'), chev=document.getElementById('ikm-map-chev');
+  if(acc && acc.style.display==='none'){ acc.style.display=''; if(chev) chev.style.transform='rotate(90deg)'; }
+  // Masquer placeholder, afficher le vrai div Leaflet
+  const ph=document.getElementById('ikm-map-ph'); if(ph) ph.style.display='none';
+  const mapDiv=document.getElementById('ikm-map'); if(mapDiv) mapDiv.style.display='';
   if(_ikmMap){ _ikmMap.remove(); _ikmMap=null; }
 
   const {lat,lng}=_ikmDepotCoords;
@@ -2152,7 +2222,7 @@ function showIkmMap(){
     calcIkm();
   }
 
-  setTimeout(()=>{ if(_ikmMap) _ikmMap.invalidateSize(); },150);
+  setTimeout(()=>{ if(_ikmMap) _ikmMap.invalidateSize(); },300);
 }
 
 function calcIkm(){
@@ -2293,25 +2363,7 @@ function applyPanierToWorkedDays(){
   flash('✓ Panier appliqué aux jours travaillés');
 }
 
-function updatePanierCount(){
-  const count   = eData.filter(e=>e.panier).length;
-  const unitExo = parseFloat(document.getElementById('wk_panier_unit')?.value)||0;
-  const unitTax = parseFloat(document.getElementById('wk_panier_unit_tax')?.value)||0;
-  const totExo  = count * unitExo;
-  const totTax  = count * unitTax;
-  const totWeek = totExo + totTax;
-  const totMois = totWeek * (52/12);
-
-  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  s('wk_panier_count', count+' j. / semaine');
-  s('wk_pan_cnt_exo', count+'j');
-  s('wk_pan_cnt_tax', count+'j');
-  s('wk_pan_tot_exo', unitExo>0 ? totExo.toFixed(2)+' €' : '— €');
-  s('wk_pan_tot_tax', unitTax>0 ? totTax.toFixed(2)+' €' : '— €');
-  s('wk_panier_total',  (unitExo>0||unitTax>0) ? totWeek.toFixed(2)+' €' : '— €');
-  s('wk_panier_mensuel',(unitExo>0||unitTax>0) ? totMois.toFixed(2)+' €' : '— €');
-  recalcAll();
-}
+function updatePanierCount(){ recalcAll(); }
 
 /* ── PHOTO JUSTIFICATIF ── */
 function onPhotoChange(){
