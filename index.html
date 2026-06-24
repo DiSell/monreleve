@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TimePro — Relevé d'heures</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -814,78 +812,87 @@ textarea::placeholder{color:#B8C4D4;}
             </div>
             <div id="ikm-chantier-status" style="font-size:10px;color:#94A3B8;margin-bottom:4px;display:none;"></div>
 
-            <!-- ── Accordéon : Carte ── -->
-            <button class="extras-toggle" id="ikm-map-tog" onclick="toggleIkmMap()" style="width:100%;justify-content:space-between;">
-              <span>🗺️ Carte</span>
-              <span id="ikm-map-chev" style="font-size:12px;transition:transform .2s;">›</span>
-            </button>
-            <div id="ikm-map-acc" style="display:none;overflow:hidden;">
-              <div id="ikm-map-wrap" style="border-radius:12px;overflow:hidden;margin:6px 0 4px;border:2px solid #E8EDF8;">
-                <div id="ikm-map-ph" style="height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:#F4F8FB;color:#94A3B8;font-size:12px;text-align:center;padding:16px;">
-                  <span style="font-size:30px;">🗺️</span>
-                  <span>Géocodez le dépôt puis le chantier<br>avec les boutons <strong>📍</strong> pour voir la carte</span>
-                </div>
-                <div id="ikm-map" style="height:200px;width:100%;display:none;"></div>
-                <div style="background:#F8FAFC;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#2563EB;display:inline-block;border-radius:2px;"></span>Dépôt</span>
-                  <span style="font-size:10px;color:#94A3B8;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;background:#EF4444;display:inline-block;border-radius:2px;border-style:dashed;"></span>Chantier</span>
-                  <span id="ikm-dist-badge" style="display:none;margin-left:auto;font-size:11px;font-weight:700;color:#2563EB;background:#EBF2FF;border-radius:6px;padding:2px 8px;"></span>
-                </div>
+            <!-- ── Carte SVG concentrique (toujours visible) ── -->
+            <div style="background:#F8FAFC;border:1.5px solid #E6EBF2;border-radius:13px;padding:10px;margin:6px 0;">
+              <div style="display:flex;justify-content:center;">
+                <svg id="ikm-svg-map" viewBox="0 0 200 200" style="width:200px;height:200px;display:block;">
+                  <circle cx="100" cy="100" r="98" fill="#8B5CF6" fill-opacity="0.10"/>
+                  <circle cx="100" cy="100" r="82" fill="#EF4444" fill-opacity="0.10"/>
+                  <circle cx="100" cy="100" r="66" fill="#F97316" fill-opacity="0.12"/>
+                  <circle cx="100" cy="100" r="50" fill="#F59E0B" fill-opacity="0.13"/>
+                  <circle cx="100" cy="100" r="34" fill="#10B981" fill-opacity="0.14"/>
+                  <circle cx="100" cy="100" r="18" fill="#3B82F6" fill-opacity="0.20"/>
+                  <circle cx="100" cy="100" r="98" fill="none" stroke="#CBD5E1" stroke-width="1"/>
+                  <circle cx="100" cy="100" r="82" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                  <circle cx="100" cy="100" r="66" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                  <circle cx="100" cy="100" r="50" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                  <circle cx="100" cy="100" r="34" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                  <circle cx="100" cy="100" r="18" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                  <text x="100" y="92" text-anchor="middle" font-size="7" fill="#64748B" font-family="sans-serif">I</text>
+                  <text x="100" y="76" text-anchor="middle" font-size="7" fill="#64748B" font-family="sans-serif">II</text>
+                  <text x="100" y="60" text-anchor="middle" font-size="7" fill="#64748B" font-family="sans-serif">III</text>
+                  <text x="100" y="44" text-anchor="middle" font-size="7" fill="#64748B" font-family="sans-serif">IV</text>
+                  <text x="100" y="28" text-anchor="middle" font-size="7" fill="#64748B" font-family="sans-serif">V</text>
+                  <line id="ikm-svg-line" x1="100" y1="100" x2="100" y2="100" stroke="#1D4ED8" stroke-width="2" stroke-dasharray="3 3" display="none"/>
+                  <circle id="ikm-svg-pin" cx="100" cy="100" r="6" fill="#EF4444" stroke="#fff" stroke-width="2" display="none"/>
+                  <circle cx="100" cy="100" r="6" fill="#1D4ED8" stroke="#fff" stroke-width="2"/>
+                </svg>
+              </div>
+              <div style="display:flex;justify-content:center;gap:16px;margin-top:6px;">
+                <span style="font-size:10px;color:#64748B;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#1D4ED8;display:inline-block;"></span>Dépôt</span>
+                <span style="font-size:10px;color:#64748B;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#EF4444;display:inline-block;"></span>Chantier</span>
               </div>
             </div>
 
-            <!-- ── Accordéon : Zones & Taux ── -->
-            <button class="extras-toggle" id="ikm-zones-tog" onclick="toggleIkmZones()" style="width:100%;justify-content:space-between;">
-              <span>📐 Zones &amp; Taux</span>
-              <span id="ikm-zones-chev" style="font-size:12px;transition:transform .2s;">›</span>
-            </button>
-            <div id="ikm-zones-acc" style="display:none;">
-              <!-- Zone auto-détectée -->
-              <div id="ikm-zone-detected" style="display:none;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:10px;padding:10px 12px;margin:6px 0 10px;align-items:center;gap:8px;">
-                <span style="font-size:20px;">✅</span>
-                <div style="flex:1;">
-                  <div style="font-size:10px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.05em;">Zone détectée automatiquement</div>
-                  <div style="font-size:13px;font-weight:700;color:#0F172A;margin-top:2px;"><span id="ikm-zone-label">—</span> <span style="font-weight:400;color:#64748B;font-size:11px;">· <span id="ikm-dist-label">—</span> à vol d'oiseau</span></div>
-                </div>
+            <!-- Zone auto-détectée -->
+            <div id="ikm-zone-detected" style="display:none;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:10px;padding:10px 12px;margin:4px 0 8px;align-items:center;gap:8px;">
+              <span style="font-size:18px;">✅</span>
+              <div style="flex:1;">
+                <div style="font-size:10px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.05em;">Zone détectée</div>
+                <div style="font-size:13px;font-weight:700;color:#0F172A;margin-top:2px;"><span id="ikm-zone-label">—</span> <span style="font-weight:400;color:#64748B;font-size:11px;">· <span id="ikm-dist-label">—</span> à vol d'oiseau</span></div>
               </div>
-              <!-- Taux par zone -->
-              <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Taux journalier (accord régional)</div>
-              <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;" id="ikm-zones-list">
-                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-1">
-                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0;"></span>
-                  <span style="font-size:12px;color:#475569;flex:1;">Zone I &nbsp;≤ 10 km</span>
-                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-2">
-                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0;"></span>
-                  <span style="font-size:12px;color:#475569;flex:1;">Zone II &nbsp;11-20 km</span>
-                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-3">
-                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></span>
-                  <span style="font-size:12px;color:#475569;flex:1;">Zone III &nbsp;21-30 km</span>
-                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-4">
-                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;"></span>
-                  <span style="font-size:12px;color:#475569;flex:1;">Zone IV &nbsp;31-40 km</span>
-                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;" id="ikm-zrow-5">
-                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;"></span>
-                  <span style="font-size:12px;color:#475569;flex:1;">Zone V &nbsp;41-50 km</span>
-                  <div class="we-input-wrap" style="width:90px;"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
-                </div>
-              </div>
-              <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Ma zone <span style="font-weight:400;text-transform:none;">(corrigeable)</span></div>
-              <select id="ikm-zone-sel" onchange="highlightZoneRow();calcIkm()" style="width:100%;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:9px;padding:9px 8px;font-size:12px;font-weight:700;font-family:inherit;color:#0F172A;-webkit-appearance:none;margin-bottom:4px;">
-                <option value="1">Zone I — ≤ 10 km</option>
-                <option value="2">Zone II — 11 à 20 km</option>
-                <option value="3">Zone III — 21 à 30 km</option>
-                <option value="4">Zone IV — 31 à 40 km</option>
-                <option value="5">Zone V — 41 à 50 km</option>
-              </select>
             </div>
+
+            <!-- Taux par zone — cliquer sur une ligne pour forcer la zone -->
+            <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Tarif journalier <span style="font-weight:500;text-transform:none;">· taper sur une ligne pour choisir</span></div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 8px;cursor:pointer;border:1.5px solid transparent;transition:background .15s,border-color .15s;" id="ikm-zrow-1" onclick="pickZone(1)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone I <span style="color:#94A3B8;">≤ 10 km</span></span>
+                <div class="we-input-wrap" style="width:88px;" onclick="event.stopPropagation()"><input type="number" id="ikm-z1" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 8px;cursor:pointer;border:1.5px solid transparent;transition:background .15s,border-color .15s;" id="ikm-zrow-2" onclick="pickZone(2)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone II <span style="color:#94A3B8;">11-20 km</span></span>
+                <div class="we-input-wrap" style="width:88px;" onclick="event.stopPropagation()"><input type="number" id="ikm-z2" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 8px;cursor:pointer;border:1.5px solid transparent;transition:background .15s,border-color .15s;" id="ikm-zrow-3" onclick="pickZone(3)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone III <span style="color:#94A3B8;">21-30 km</span></span>
+                <div class="we-input-wrap" style="width:88px;" onclick="event.stopPropagation()"><input type="number" id="ikm-z3" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 8px;cursor:pointer;border:1.5px solid transparent;transition:background .15s,border-color .15s;" id="ikm-zrow-4" onclick="pickZone(4)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F97316;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone IV <span style="color:#94A3B8;">31-40 km</span></span>
+                <div class="we-input-wrap" style="width:88px;" onclick="event.stopPropagation()"><input type="number" id="ikm-z4" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 8px;cursor:pointer;border:1.5px solid transparent;transition:background .15s,border-color .15s;" id="ikm-zrow-5" onclick="pickZone(5)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Zone V <span style="color:#94A3B8;">41-50 km</span></span>
+                <div class="we-input-wrap" style="width:88px;" onclick="event.stopPropagation()"><input type="number" id="ikm-z5" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 8px;cursor:pointer;border:1.5px solid transparent;transition:background .15s,border-color .15s;" id="ikm-zrow-6" onclick="pickZone(6)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;"></span>
+                <span style="font-size:12px;color:#475569;flex:1;">Grand dép. <span style="color:#94A3B8;">> 50 km</span></span>
+                <div class="we-input-wrap" style="width:88px;" onclick="event.stopPropagation()"><input type="number" id="ikm-z6" min="0" step="0.01" placeholder="—" oninput="calcIkm()"><span class="we-unit">€/j</span></div>
+              </div>
+            </div>
+            <!-- Sélecteur de zone (caché, piloté par pickZone) -->
+            <select id="ikm-zone-sel" style="display:none;" onchange="highlightZoneRow();calcIkm()">
+              <option value="1">Zone I</option><option value="2">Zone II</option>
+              <option value="3">Zone III</option><option value="4">Zone IV</option>
+              <option value="5">Zone V</option><option value="6">Grand déplacement</option>
+            </select>
 
             <!-- Résultat — toujours visible -->
             <div style="display:flex;align-items:center;gap:5px;background:#F8FAFC;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:8px;">
@@ -1269,7 +1276,7 @@ function loadWeeks(){ try{ return JSON.parse(localStorage.getItem(WEEKS_KEY))||[
 const _FIELDS = ['i_nom','i_prenom','i_qualif','i_contrat','i_tel','i_email',
                  'ag_nom','ag_siret','ag_adr','ag_cp','ag_ville','ag_resp','ag_tel',
                  'cl_nom','cl_qualite','wk_prime','wk_trajet','wk_km_total','wk_panier_unit','wk_comment',
-                 'ikm-depot-adr','ikm-chantier-adr','ikm-z1','ikm-z2','ikm-z3','ikm-z4','ikm-z5',
+                 'ikm-depot-adr','ikm-chantier-adr','ikm-z1','ikm-z2','ikm-z3','ikm-z4','ikm-z5','ikm-z6',
                  'taux_horaire','wk_panier_unit_tax'];
 let _draftTimer = null;
 
@@ -2054,19 +2061,27 @@ function toggleIkm(){
   debouncedSave();
 }
 
-function toggleIkmMap(){
-  const acc=document.getElementById('ikm-map-acc'), chev=document.getElementById('ikm-map-chev');
-  const open=acc.style.display!=='none';
-  acc.style.display=open?'none':'';
-  if(chev) chev.style.transform=open?'':'rotate(90deg)';
-  if(!open && _ikmMap) setTimeout(()=>_ikmMap.invalidateSize(),150);
+function updateBtpMap(km){
+  const ang=-35*Math.PI/180;
+  const pr=km>0?Math.min(km,55)/55*92:0;
+  const px=(100+pr*Math.cos(ang)).toFixed(1);
+  const py=(100+pr*Math.sin(ang)).toFixed(1);
+  const line=document.getElementById('ikm-svg-line');
+  const pin=document.getElementById('ikm-svg-pin');
+  if(km>0){
+    if(line){line.setAttribute('x2',px);line.setAttribute('y2',py);line.removeAttribute('display');}
+    if(pin){pin.setAttribute('cx',px);pin.setAttribute('cy',py);pin.removeAttribute('display');}
+  } else {
+    if(line) line.setAttribute('display','none');
+    if(pin)  pin.setAttribute('display','none');
+  }
 }
 
-function toggleIkmZones(){
-  const acc=document.getElementById('ikm-zones-acc'), chev=document.getElementById('ikm-zones-chev');
-  const open=acc.style.display!=='none';
-  acc.style.display=open?'none':'';
-  if(chev) chev.style.transform=open?'':'rotate(90deg)';
+function pickZone(z){
+  const sel=document.getElementById('ikm-zone-sel');
+  if(sel) sel.value=z;
+  highlightZoneRow();
+  calcIkm();
 }
 
 function _openAcc(accId, chevId){
@@ -2083,14 +2098,9 @@ function setIkmMode(mode){
   const inactive='border:2px solid #E8EDF8;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:700;background:transparent;color:#94A3B8;cursor:pointer;font-family:inherit;';
   document.getElementById('ikm-btn-f').style.cssText = mode==='fiscal' ? active : inactive;
   document.getElementById('ikm-btn-b').style.cssText = mode==='btp'    ? active : inactive;
-  if(mode==='btp'){
-    _openAcc('ikm-map-acc','ikm-map-chev');
-    _openAcc('ikm-zones-acc','ikm-zones-chev');
-  }
   calcIkm();
 }
 
-let _ikmMap = null;
 let _ikmDepotCoords = null;
 let _ikmChantierCoords = null;
 
@@ -2106,17 +2116,19 @@ function zoneFromKm(km){
   if(km<=20) return 2;
   if(km<=30) return 3;
   if(km<=40) return 4;
-  return 5;
+  if(km<=50) return 5;
+  return 6;
 }
 
 function highlightZoneRow(){
   const sel=parseInt(document.getElementById('ikm-zone-sel')?.value)||1;
-  const colors=['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6'];
-  for(let i=1;i<=5;i++){
+  const colors=['#3B82F6','#10B981','#F59E0B','#F97316','#EF4444','#8B5CF6'];
+  const bgs=['#EFF6FF','#F0FDF4','#FFFBEB','#FFF7ED','#FEF2F2','#F5F3FF'];
+  for(let i=1;i<=6;i++){
     const row=document.getElementById('ikm-zrow-'+i);
-    if(row) row.style.background = i===sel ? (colors[i-1]+'18') : '';
-    if(row) row.style.borderRadius = i===sel ? '8px' : '';
-    if(row) row.style.padding = i===sel ? '4px 6px' : '';
+    if(!row) continue;
+    row.style.background    = i===sel ? bgs[i-1]      : '';
+    row.style.borderColor   = i===sel ? colors[i-1]   : 'transparent';
   }
 }
 
@@ -2158,71 +2170,20 @@ async function geocodeChantier(){
 }
 
 function showIkmMap(){
-  if(!_ikmDepotCoords) return;
-  // Ouvrir l'accordéon carte si fermé
-  const acc=document.getElementById('ikm-map-acc'), chev=document.getElementById('ikm-map-chev');
-  if(acc && acc.style.display==='none'){ acc.style.display=''; if(chev) chev.style.transform='rotate(90deg)'; }
-  // Masquer placeholder, afficher le vrai div Leaflet
-  const ph=document.getElementById('ikm-map-ph'); if(ph) ph.style.display='none';
-  const mapDiv=document.getElementById('ikm-map'); if(mapDiv) mapDiv.style.display='';
-  if(_ikmMap){ _ikmMap.remove(); _ikmMap=null; }
-
+  if(!_ikmDepotCoords || !_ikmChantierCoords) return;
   const {lat,lng}=_ikmDepotCoords;
-  let centerLat=lat, centerLng=lng, zoom=9;
-
-  if(_ikmChantierCoords){
-    centerLat=(lat+_ikmChantierCoords.lat)/2;
-    centerLng=(lng+_ikmChantierCoords.lng)/2;
-    const km=haversineKm(lat,lng,_ikmChantierCoords.lat,_ikmChantierCoords.lng);
-    zoom=km<5?13:km<15?11:km<30?10:km<60?9:8;
-  }
-
-  _ikmMap=L.map('ikm-map',{center:[centerLat,centerLng],zoom,zoomControl:true,attributionControl:false});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(_ikmMap);
-
-  // Icônes personnalisées
-  const mkIcon=(bg,emoji)=>L.divIcon({html:`<div style="background:${bg};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);">${emoji}</div>`,className:'',iconSize:[28,28],iconAnchor:[14,14]});
-
-  L.marker([lat,lng],{icon:mkIcon('#2563EB','🏢')}).addTo(_ikmMap).bindPopup('Dépôt');
-
-  // Cercles zones (du plus grand au plus petit pour éviter le masquage)
-  const zonesDef=[
-    {r:50000,color:'#8B5CF6'},{r:40000,color:'#EF4444'},
-    {r:30000,color:'#F59E0B'},{r:20000,color:'#10B981'},{r:10000,color:'#3B82F6'},
-  ];
-  zonesDef.forEach(z=>{
-    L.circle([lat,lng],{radius:z.r,color:z.color,fillColor:z.color,fillOpacity:0.05,weight:2}).addTo(_ikmMap);
-  });
-
-  // Chantier
-  if(_ikmChantierCoords){
-    const {lat:cl,lng:cg}=_ikmChantierCoords;
-    const km=haversineKm(lat,lng,cl,cg);
-
-    L.marker([cl,cg],{icon:mkIcon('#EF4444','🏗')}).addTo(_ikmMap).bindPopup(`Chantier — ${km.toFixed(1)} km du dépôt`);
-    L.polyline([[lat,lng],[cl,cg]],{color:'#EF4444',weight:2,dashArray:'6,4',opacity:.8}).addTo(_ikmMap);
-
-    // Distance badge
-    const badge=document.getElementById('ikm-dist-badge');
-    if(badge){ badge.textContent=km.toFixed(1)+' km à vol d\'oiseau'; badge.style.display=''; }
-
-    // Auto-sélection de la zone
-    const zone=zoneFromKm(km);
-    const sel=document.getElementById('ikm-zone-sel');
-    if(sel) sel.value=zone;
-
-    // Badge zone détectée
-    const det=document.getElementById('ikm-zone-detected');
-    if(det){ det.style.display='flex'; }
-    const zLabels=['','Zone I ≤10km','Zone II 11-20km','Zone III 21-30km','Zone IV 31-40km','Zone V 41-50km'];
-    const zl=document.getElementById('ikm-zone-label'); if(zl) zl.textContent=zLabels[zone];
-    const dl=document.getElementById('ikm-dist-label'); if(dl) dl.textContent=km.toFixed(1)+' km';
-
-    highlightZoneRow();
-    calcIkm();
-  }
-
-  setTimeout(()=>{ if(_ikmMap) _ikmMap.invalidateSize(); },300);
+  const km=haversineKm(lat,lng,_ikmChantierCoords.lat,_ikmChantierCoords.lng);
+  const zone=zoneFromKm(km);
+  const sel=document.getElementById('ikm-zone-sel');
+  if(sel) sel.value=zone;
+  const det=document.getElementById('ikm-zone-detected');
+  if(det) det.style.display='flex';
+  const ZONE_NAMES=['Zone I','Zone II','Zone III','Zone IV','Zone V','Grand déplacement'];
+  const zl=document.getElementById('ikm-zone-label'); if(zl) zl.textContent=ZONE_NAMES[zone-1];
+  const dl=document.getElementById('ikm-dist-label'); if(dl) dl.textContent=km.toFixed(1)+' km';
+  updateBtpMap(km);
+  highlightZoneRow();
+  calcIkm();
 }
 
 function calcIkm(){
@@ -2243,6 +2204,7 @@ function calcIkm(){
       parseFloat(document.getElementById('ikm-z3')?.value)||0,
       parseFloat(document.getElementById('ikm-z4')?.value)||0,
       parseFloat(document.getElementById('ikm-z5')?.value)||0,
+      parseFloat(document.getElementById('ikm-z6')?.value)||0,
     ];
     const daily = zRates[zoneSel];
     const total = daily * jours;
