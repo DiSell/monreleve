@@ -793,7 +793,7 @@ textarea::placeholder{color:#B8C4D4;}
             <!-- Dépôt -->
             <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">🏢 Dépôt (point de départ)</div>
             <div style="display:flex;gap:6px;margin-bottom:4px;">
-              <input type="text" id="ikm-depot-adr" placeholder="Ex: 12 rue des Maçons, 43100 Brioude" oninput="debouncedSave()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
+              <input type="text" id="ikm-depot-adr" placeholder="Ex: 12 rue des Maçons, 43100 Brioude" oninput="debouncedSave();_autoGeoDepot()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
               <button onclick="geocodeDepot()" id="ikm-geo-btn" title="Localiser le dépôt" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:9px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">📍</button>
             </div>
             <div id="ikm-geo-status" style="font-size:10px;color:#94A3B8;margin-bottom:6px;display:none;"></div>
@@ -807,7 +807,7 @@ textarea::placeholder{color:#B8C4D4;}
             <!-- Chantier -->
             <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">🏗 Chantier (lieu de travail)</div>
             <div style="display:flex;gap:6px;margin-bottom:4px;">
-              <input type="text" id="ikm-chantier-adr" placeholder="Ex: ZI du Brézet, 63100 Clermont-Ferrand" oninput="debouncedSave()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
+              <input type="text" id="ikm-chantier-adr" placeholder="Ex: ZI du Brézet, 63100 Clermont-Ferrand" oninput="debouncedSave();_autoGeoChantier()" style="flex:1;background:#F4F8FB;border:2px solid #E8EDF8;border-radius:10px;padding:9px 10px;font-size:12px;font-family:inherit;color:#0F172A;min-width:0;">
               <button onclick="geocodeChantier()" id="ikm-chantier-btn" title="Localiser le chantier" style="background:#EF4444;color:#fff;border:none;border-radius:10px;padding:9px 13px;font-size:15px;cursor:pointer;flex-shrink:0;">📍</button>
             </div>
             <div id="ikm-chantier-status" style="font-size:10px;color:#94A3B8;margin-bottom:4px;display:none;"></div>
@@ -2150,6 +2150,22 @@ async function _geocodeAddr(addr, btnId, statId){
   }
 }
 
+let _geoDepotTimer=null, _geoChantierTimer=null;
+
+function _autoGeoDepot(){
+  clearTimeout(_geoDepotTimer);
+  const addr=(document.getElementById('ikm-depot-adr')?.value||'').trim();
+  if(addr.length<5) return;
+  _geoDepotTimer=setTimeout(geocodeDepot,1000);
+}
+
+function _autoGeoChantier(){
+  clearTimeout(_geoChantierTimer);
+  const addr=(document.getElementById('ikm-chantier-adr')?.value||'').trim();
+  if(addr.length<5) return;
+  _geoChantierTimer=setTimeout(geocodeChantier,1000);
+}
+
 async function geocodeDepot(){
   const addr=(document.getElementById('ikm-depot-adr')?.value||'').trim();
   if(!addr){ flash('⚠ Saisissez l\'adresse du dépôt','#F59E0B'); return; }
@@ -2162,7 +2178,6 @@ async function geocodeDepot(){
 async function geocodeChantier(){
   const addr=(document.getElementById('ikm-chantier-adr')?.value||'').trim();
   if(!addr){ flash('⚠ Saisissez l\'adresse du chantier','#F59E0B'); return; }
-  if(!_ikmDepotCoords){ flash('⚠ Localisez d\'abord le dépôt','#F59E0B'); return; }
   const coords=await _geocodeAddr(addr,'ikm-chantier-btn','ikm-chantier-status');
   if(!coords) return;
   _ikmChantierCoords=coords;
